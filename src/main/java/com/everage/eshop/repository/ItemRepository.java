@@ -8,6 +8,6 @@ import java.util.List;
 import java.util.UUID;
 
 @Repository
-public interface ItemRepository extends BaseJpaRepository<Item, UUID>{
+public interface ItemRepository extends BaseJpaRepository<Item, UUID> {
     List<Item> findAll();
 }
