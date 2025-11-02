@@ -3,6 +3,8 @@ package com.everage.eshop.service;
 import com.everage.eshop.dto.ItemDto;
 import com.everage.eshop.dto.ItemMapper;
 import com.everage.eshop.entity.Item;
+import com.everage.eshop.exception.ItemAlreadyExistsException;
+import com.everage.eshop.exception.ItemNotFoundException;
 import com.everage.eshop.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,20 +32,17 @@ public class ItemService {
     @Transactional(readOnly = true)
     public ItemDto getItemById(UUID id) {
         log.info("Fetching item by id: {}", id);
-        ItemDto item = itemMapper.toDto(itemRepository
-                .findById(id)
-                .orElse(null)
-        );
-        if (item != null) {
-            log.info("Found item: {}", item.name());
-        } else {
-            log.warn("Item not found with id: {}", id);
-        }
-        return item;
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + id));
+        log.info("Found item: {}", item.getName());
+        return itemMapper.toDto(item);
     }
 
     @Transactional
     public ItemDto createItem(ItemDto itemDto) {
+        if (itemRepository.findByName(itemDto.name()) != null) {
+            throw new ItemAlreadyExistsException("Item with name " + itemDto.name() + " already exists");
+        };
         log.info("Creating new item: {}", itemDto.name());
         Item item = itemMapper.toEntity(itemDto);
         itemRepository.persist(item);

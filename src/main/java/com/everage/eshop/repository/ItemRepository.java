@@ -10,4 +10,5 @@ import java.util.UUID;
 @Repository
 public interface ItemRepository extends BaseJpaRepository<Item, UUID> {
     List<Item> findAll();
+    Item findByName(String name);
 }
