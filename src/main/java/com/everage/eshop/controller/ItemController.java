@@ -9,12 +9,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 @RequestMapping("/api/items")
 public class ItemController {
     private final ItemService itemService;
@@ -23,7 +25,7 @@ public class ItemController {
      * API endpoint to retrieve all items.
      * @return list of {@link ItemDto}
      */
-    @GetMapping(path = "/all")
+    @GetMapping(path = "/all", produces = "application/json")
     public List<ItemDto> getAllItems() {
         // Logic to retrieve all items from the database
         return itemService.getAllItems();
@@ -34,7 +36,7 @@ public class ItemController {
      * @param id
      * @return {@link ItemDto}
      */
-    @GetMapping(path = "/{id}")
+    @GetMapping(path = "/{id}", produces = "application/json")
     public ItemDto getItemById(@PathVariable UUID id) {
         return itemService.getItemById(id);
     }
@@ -44,9 +46,8 @@ public class ItemController {
      * @param {@link ItemDto}
      * @return {@link ItemDto}
      */
-    @PostMapping(path = "/add")
+    @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
     public ItemDto addItem(@RequestBody ItemDto itemDto) {
-        // Logic to add a new item to the database
         return itemService.createItem(itemDto);
     }
 }
