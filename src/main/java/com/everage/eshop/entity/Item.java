@@ -6,6 +6,8 @@ import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.Data;
 
 import java.util.UUID;
@@ -25,6 +27,9 @@ public class Item {
     private String description;
     @Column(nullable = false)
     private BigDecimal price;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private ItemStatus status = ItemStatus.ACTIVE;
     @Column(nullable = false)
     private Integer quantity;
 }
