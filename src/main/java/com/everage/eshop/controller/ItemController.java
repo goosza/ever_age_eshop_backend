@@ -2,12 +2,7 @@ package com.everage.eshop.controller;
 
 import com.everage.eshop.dto.ItemDto;
 import com.everage.eshop.service.ItemService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -49,5 +44,16 @@ public class ItemController {
     @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
     public ItemDto addItem(@RequestBody ItemDto itemDto) {
         return itemService.createItem(itemDto);
+    }
+
+    /**
+     * API endpoint to update an existing item.
+     * @param {@link ItemDto}
+     * @return {@link ItemDto}
+     */
+    @PutMapping(path = "/{id}/update", consumes = "application/json", produces = "application/json")
+    public ItemDto updateItem(@PathVariable UUID id,
+                              @RequestBody ItemDto itemDto) {
+        return itemService.updateItem(id, itemDto);
     }
 }

@@ -50,4 +50,26 @@ public class ItemService {
         log.info("Item created successfully with id: {}, name: {}", result.uuid(), result.name());
         return result;
     }
+
+    @Transactional
+    public ItemDto updateItem(UUID id, ItemDto itemDto) {
+        log.info("Updating item with id: {}, name: {}", id, itemDto.name());
+        Item item = itemRepository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + id));
+
+        Item existingByName = itemRepository.findByName(itemDto.name());
+        if (existingByName != null && !existingByName.getUuid().equals(id)) {
+            throw new ItemAlreadyExistsException("Name already taken");
+        }
+        item.setName(itemDto.name());
+        item.setDescription(itemDto.description());
+        item.setPrice(itemDto.price());
+        item.setQuantity(itemDto.quantity());
+//        itemRepository.persist(item);
+        ItemDto result = itemMapper.toDto(item);
+        log.info("Item updated successfully with id: {}, name: {}", result.uuid(), result.name());
+        log.info("Updated info: name={}, description={}, price={}, quantity={}",
+                result.name(), result.description(), result.price(), result.quantity());
+        return result;
+    }
 }

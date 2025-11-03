@@ -22,6 +22,9 @@ public class Item {
     private UUID uuid;
     @Column(nullable = false)
     private String name;
+    private String description;
     @Column(nullable = false)
     private BigDecimal price;
+    @Column(nullable = false)
+    private Integer quantity;
 }

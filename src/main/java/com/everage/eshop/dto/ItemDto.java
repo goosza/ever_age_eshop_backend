@@ -6,5 +6,7 @@ import java.util.UUID;
 public record ItemDto(
         UUID uuid,
         String name,
-        BigDecimal price
+        String description,
+        BigDecimal price,
+        Integer quantity
 ) {}
