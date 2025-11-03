@@ -19,9 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -259,6 +257,8 @@ class ItemServiceTest {
         item.setUuid(UUID.randomUUID());
         item.setName("Test Item");
         item.setPrice(BigDecimal.valueOf(19.99));
+        item.setQuantity(10);
+        item.setStatus(ItemStatus.ACTIVE);
         return item;
     }
 
@@ -269,7 +269,6 @@ class ItemServiceTest {
     private Item createItemWithQuantity(int quantity) {
         Item item = createItem();
         item.setQuantity(quantity);
-        item.setStatus(ItemStatus.ACTIVE);
         return item;
     }
 }
