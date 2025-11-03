@@ -5,6 +5,7 @@ import com.everage.eshop.dto.ItemMapper;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.exception.ItemAlreadyExistsException;
 import com.everage.eshop.exception.ItemNotFoundException;
+import com.everage.eshop.exception.InvalidItemStatusException;
 import com.everage.eshop.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -43,12 +44,12 @@ public class ItemService {
     public ItemDto createItem(ItemDto itemDto) {
         if (itemRepository.findByName(itemDto.name()) != null) {
             throw new ItemAlreadyExistsException("Item with name " + itemDto.name() + " already exists");
-        };
+        }
         log.info("Creating new item: {}", itemDto.name());
         Item item = itemMapper.toEntity(itemDto);
         
-        // Automatic item status control while creating new item
-        updateItemStatus(item, itemDto.status());
+        // Validate item status against quantity
+        validateItemStatus(item, itemDto.status());
         
         itemRepository.persist(item);
         ItemDto result = itemMapper.toDto(item);
@@ -71,8 +72,8 @@ public class ItemService {
         item.setPrice(itemDto.price());
         item.setQuantity(itemDto.quantity());
         
-        // Automatic item status control based on amount
-        updateItemStatus(item, itemDto.status());
+        // Validate item status against quantity
+        validateItemStatus(item, itemDto.status());
 //        itemRepository.persist(item);
         ItemDto result = itemMapper.toDto(item);
         log.info("Item updated successfully with id: {}, name: {}", result.uuid(), result.name());
@@ -82,29 +83,31 @@ public class ItemService {
     }
 
     /**
-     * Automatic item status control based on amount
-     * @param {@link Item} item
-     * @param {@link ItemStatus} requestedStatus
+     * Validates item status against quantity
+     * @param item {@link Item}
+     * @param requestedStatus {@link ItemStatus}
      */
-    private void updateItemStatus(Item item, ItemStatus requestedStatus) {
+    private void validateItemStatus(Item item, ItemStatus requestedStatus) {
         if (item.getQuantity() == null || item.getQuantity() <= 0) {
-            // If amount is 0 or below 0, setting OUT_OF_STOCK
-            item.setStatus(ItemStatus.OUT_OF_STOCK);
-            log.info("Item {} status automatically set to OUT_OF_STOCK due to zero quantity", item.getName());
-        } else if (item.getQuantity() > 0 && requestedStatus == ItemStatus.OUT_OF_STOCK) {
-            // If amount is bigger than 0, but requesting OUT_OF_STOCK, setting ACTIVE
-            item.setStatus(ItemStatus.ACTIVE);
-            log.info("Item {} status automatically set to ACTIVE due to positive quantity", item.getName());
+            if (requestedStatus != ItemStatus.OUT_OF_STOCK) {
+                throw new InvalidItemStatusException(
+                    "Item with zero quantity must have OUT_OF_STOCK status, but got: " + requestedStatus);
+            }
         } else {
-            // In other cases using requested status
-            item.setStatus(requestedStatus != null ? requestedStatus : ItemStatus.ACTIVE);
+            if (requestedStatus == ItemStatus.OUT_OF_STOCK) {
+                throw new InvalidItemStatusException(
+                    "Item with positive quantity (" + item.getQuantity() + ") cannot have OUT_OF_STOCK status");
+            }
         }
+        
+        // If validation passes, set the requested status
+        item.setStatus(requestedStatus != null ? requestedStatus : ItemStatus.ACTIVE);
     }
 
     /**
      * Decreases item amount (for ex., after purchase)
-     * @param {@link UUID} id
-     * @param {@link Integer} amount
+     * @param id {@link UUID}
+     * @param amount {@link Integer}
      * @return {@link ItemDto}
      */
     @Transactional
@@ -116,8 +119,11 @@ public class ItemService {
         int newQuantity = Math.max(0, item.getQuantity() - amount);
         item.setQuantity(newQuantity);
         
-        // Automatically updating status
-        updateItemStatus(item, item.getStatus());
+        // Validate status after quantity change
+        if (newQuantity <= 0 && item.getStatus() != ItemStatus.OUT_OF_STOCK) {
+            item.setStatus(ItemStatus.OUT_OF_STOCK);
+            log.info("Item {} status automatically changed to OUT_OF_STOCK due to zero quantity", item.getName());
+        }
         
         ItemDto result = itemMapper.toDto(item);
         log.info("Item quantity updated: {} -> {}, status: {}", 
