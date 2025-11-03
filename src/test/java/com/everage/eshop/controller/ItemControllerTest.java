@@ -2,6 +2,9 @@ package com.everage.eshop.controller;
 
 import com.everage.eshop.dto.ItemDto;
 import com.everage.eshop.exception.ItemNotFoundException;
+import com.everage.eshop.exception.ItemAlreadyExistsException;
+import com.everage.eshop.exception.InvalidItemStatusException;
+import com.everage.eshop.entity.ItemStatus;
 import com.everage.eshop.service.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -76,7 +80,7 @@ class ItemControllerTest {
     @Test
     void addItem_WithValidData_ShouldCreateItem() throws Exception {
         // Given
-        ItemDto inputDto = new ItemDto(null, "New Item", BigDecimal.valueOf(29.99));
+        ItemDto inputDto = new ItemDto(null, "New Item", "Description", BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 10);
         ItemDto resultDto = createItemDto();
         when(itemService.createItem(any(ItemDto.class))).thenReturn(resultDto);
 
@@ -89,7 +93,70 @@ class ItemControllerTest {
                 .andExpect(jsonPath("$.name").value("Test Item"));
     }
 
+    @Test
+    void addItem_WithDuplicateName_ShouldReturn409() throws Exception {
+        // Given
+        ItemDto inputDto = new ItemDto(null, "Existing Item", "Description", BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 10);
+        when(itemService.createItem(any(ItemDto.class))).thenThrow(new ItemAlreadyExistsException("Item already exists"));
+
+        // When & Then
+        mockMvc.perform(post("/api/items/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"));
+    }
+
+    @Test
+    void addItem_WithInvalidStatus_ShouldReturn400() throws Exception {
+        // Given
+        ItemDto inputDto = new ItemDto(null, "New Item", "Description", BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 0);
+        when(itemService.createItem(any(ItemDto.class))).thenThrow(new InvalidItemStatusException("Invalid status"));
+
+        // When & Then
+        mockMvc.perform(post("/api/items/add")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
+    @Test
+    void updateItem_WithValidData_ShouldUpdateItem() throws Exception {
+        // Given
+        UUID id = UUID.randomUUID();
+        ItemDto inputDto = new ItemDto(null, "Updated Item", "Updated Description", BigDecimal.valueOf(39.99), ItemStatus.ACTIVE, 15);
+        ItemDto resultDto = createItemDto();
+        when(itemService.updateItem(eq(id), any(ItemDto.class))).thenReturn(resultDto);
+
+        // When & Then
+        mockMvc.perform(put("/api/items/{id}/update", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.name").value("Test Item"));
+    }
+
+    @Test
+    void updateItem_WhenItemNotExists_ShouldReturn404() throws Exception {
+        // Given
+        UUID id = UUID.randomUUID();
+        ItemDto inputDto = createItemDto();
+        when(itemService.updateItem(eq(id), any(ItemDto.class))).thenThrow(new ItemNotFoundException("Item not found"));
+
+        // When & Then
+        mockMvc.perform(put("/api/items/{id}/update", id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(inputDto)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"));
+    }
+
     private ItemDto createItemDto() {
-        return new ItemDto(UUID.randomUUID(), "Test Item", BigDecimal.valueOf(19.99));
+        return new ItemDto(UUID.randomUUID(), "Test Item", "Test Description", BigDecimal.valueOf(19.99), ItemStatus.ACTIVE, 10);
     }
 }
