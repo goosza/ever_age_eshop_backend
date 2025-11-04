@@ -42,7 +42,7 @@ public class ItemService {
 
     @Transactional
     public ItemDto createItem(ItemDto itemDto) {
-        if (itemRepository.findByName(itemDto.name()) != null) {
+        if (itemRepository.findByName(itemDto.name()).isPresent()) {
             throw new ItemAlreadyExistsException("Item with name " + itemDto.name() + " already exists");
         }
         log.info("Creating new item: {}", itemDto.name());
@@ -63,10 +63,12 @@ public class ItemService {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + id));
 
-        Item existingByName = itemRepository.findByName(itemDto.name());
-        if (existingByName != null && !existingByName.getUuid().equals(id)) {
-            throw new ItemAlreadyExistsException("Name already taken");
-        }
+        itemRepository.findByName(itemDto.name())
+                .filter(existingItem -> !existingItem.getUuid().equals(id))
+                .ifPresent(existingItem -> {
+                    throw new ItemAlreadyExistsException("Name already taken");
+                });
+
         item.setName(itemDto.name());
         item.setDescription(itemDto.description());
         item.setPrice(itemDto.price());

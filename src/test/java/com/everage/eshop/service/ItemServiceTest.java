@@ -91,7 +91,7 @@ class ItemServiceTest {
         Item item = createItem();
         ItemDto resultDto = createItemDto();
         
-        when(itemRepository.findByName(inputDto.name())).thenReturn(null);
+        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
         when(itemMapper.toEntity(inputDto)).thenReturn(item);
         when(itemMapper.toDto(item)).thenReturn(resultDto);
 
@@ -113,7 +113,7 @@ class ItemServiceTest {
         ItemDto inputDto = createItemDto();
         Item existingItem = createItem();
         
-        when(itemRepository.findByName(inputDto.name())).thenReturn(existingItem);
+        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.of(existingItem));
 
         // When & Then
         assertThrows(ItemAlreadyExistsException.class, () -> itemService.createItem(inputDto));
@@ -127,7 +127,7 @@ class ItemServiceTest {
         ItemDto inputDto = new ItemDto(null, "Test Item", "Description", BigDecimal.valueOf(19.99), ItemStatus.ACTIVE, 0);
         Item item = createItemWithQuantity(0);
         
-        when(itemRepository.findByName(inputDto.name())).thenReturn(null);
+        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
         when(itemMapper.toEntity(inputDto)).thenReturn(item);
 
         // When & Then
@@ -140,7 +140,7 @@ class ItemServiceTest {
         ItemDto inputDto = new ItemDto(null, "Test Item", "Description", BigDecimal.valueOf(19.99), ItemStatus.OUT_OF_STOCK, 5);
         Item item = createItemWithQuantity(5);
         
-        when(itemRepository.findByName(inputDto.name())).thenReturn(null);
+        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
         when(itemMapper.toEntity(inputDto)).thenReturn(item);
 
         // When & Then
@@ -156,7 +156,7 @@ class ItemServiceTest {
         ItemDto resultDto = createItemDto();
         
         when(itemRepository.findById(id)).thenReturn(Optional.of(item));
-        when(itemRepository.findByName(inputDto.name())).thenReturn(null);
+        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(resultDto);
 
         // When
@@ -194,7 +194,7 @@ class ItemServiceTest {
         existingItem.setUuid(otherId);
         
         when(itemRepository.findById(id)).thenReturn(Optional.of(item));
-        when(itemRepository.findByName(inputDto.name())).thenReturn(existingItem);
+        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.of(existingItem));
 
         // When & Then
         assertThrows(ItemAlreadyExistsException.class, () -> itemService.updateItem(id, inputDto));
