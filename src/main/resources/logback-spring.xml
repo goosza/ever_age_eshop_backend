@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <!-- Console output for dev (casual text) -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- JSON console for prod (for Loki) -->
+    <appender name="JSON_CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <includeContext>true</includeContext>
+            <includeMdc>true</includeMdc>
+            <includeCallerData>false</includeCallerData>
+            <customFields>{"application":"${spring.application.name:-myapp}"}</customFields>
+        </encoder>
+    </appender>
+
+    <!-- Profile for development -->
+    <springProfile name="dev,local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.everage.eshop" level="DEBUG"/>
+    </springProfile>
+
+    <!-- Profile for prod -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </root>
+        <logger name="com.everage.eshop" level="INFO"/>
+    </springProfile>
+</configuration>

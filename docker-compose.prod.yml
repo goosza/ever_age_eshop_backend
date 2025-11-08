@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  app:
+    image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG:-latest}
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - DATABASE_URL=${DATABASE_URL}
+      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - SERVER_URL=${SERVER_URL}
+    deploy:
+      replicas: 2
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M

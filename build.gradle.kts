@@ -20,6 +20,12 @@ dependencies {
     // SPRING DEPENDENCIES
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    // Swagger/OpenAPI
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
+
+    // Logstash Logback Encoder (JSON logs)
+    implementation("net.logstash.logback:logstash-logback-encoder:9.0")
 
     // DB
     runtimeOnly("org.postgresql:postgresql")
@@ -27,9 +33,10 @@ dependencies {
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:${project.property("hypersistenceUtilsVersion")}")
 
     // Utils
-    "compileOnly"("org.projectlombok:lombok")
-    "annotationProcessor"("org.projectlombok:lombok")
-    "annotationProcessor"("org.springframework.boot:spring-boot-configuration-processor")
+    compileOnly("org.projectlombok:lombok")
+    annotationProcessor("org.projectlombok:lombok")
+    annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
+
     implementation("org.mapstruct:mapstruct:${project.property("mapStructVersion")}")
     annotationProcessor("org.mapstruct:mapstruct-processor:${project.property("mapStructVersion")}")
 
