@@ -4,7 +4,8 @@
     <!-- Console output for dev (casual text) -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+            <charset>UTF-8</charset>
         </encoder>
     </appender>
 
@@ -14,16 +15,39 @@
             <includeContext>true</includeContext>
             <includeMdc>true</includeMdc>
             <includeCallerData>false</includeCallerData>
-            <customFields>{"application":"${spring.application.name:-myapp}"}</customFields>
+            <customFields>{"application":"eshop"}</customFields>
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <message>message</message>
+                <logger>logger</logger>
+                <thread>thread</thread>
+                <level>level</level>
+                <levelValue>[ignore]</levelValue>
+            </fieldNames>
         </encoder>
     </appender>
 
-    <!-- Profile for development -->
-    <springProfile name="dev,local">
+    <!-- Profile for local dev -->
+    <springProfile name="local">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
         </root>
-        <logger name="com.everage.eshop" level="DEBUG"/>
+        <logger name="com.everage.eshop" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+        <logger name="org.hibernate.SQL" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
+    </springProfile>
+
+    <!-- Profile for dev -->
+    <springProfile name="dev">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+        <logger name="com.everage.eshop" level="DEBUG" additivity="false">
+            <appender-ref ref="CONSOLE"/>
+        </logger>
     </springProfile>
 
     <!-- Profile for prod -->
@@ -31,6 +55,14 @@
         <root level="INFO">
             <appender-ref ref="JSON_CONSOLE"/>
         </root>
-        <logger name="com.everage.eshop" level="INFO"/>
+        <logger name="com.everage.eshop" level="INFO" additivity="false">
+            <appender-ref ref="JSON_CONSOLE"/>
+        </logger>
     </springProfile>
+
+    <!-- Default profile (if Profile is not set) -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE"/>
+    </root>
+    <logger name="com.everage.eshop" level="DEBUG"/>
 </configuration>

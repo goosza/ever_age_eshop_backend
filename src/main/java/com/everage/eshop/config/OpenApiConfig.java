@@ -20,16 +20,16 @@ public class OpenApiConfig {
     public OpenAPI customOpenAPI() {
         return new OpenAPI()
                 .info(new Info()
-                        .title("My Application API")
+                        .title("Everage API")
                         .version("1.0")
-                        .description("REST API документация для My Application")
+                        .description("REST API documentation for everage eshop")
                         .contact(new Contact()
-                                .name("Your Name")
-                                .email("your@email.com")))
+                                .name("heygosh")
+                                .email("vellenore@gmail.com")))
                 .servers(List.of(
                         new Server()
                                 .url(serverUrl)
-                                .description("Application Server")
+                                .description("Eshop Application Server")
                 ));
     }
 }
