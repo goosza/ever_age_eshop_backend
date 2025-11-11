@@ -79,7 +79,7 @@ jobs:
           echo "Building version: $VERSION"
 
       - name: Upload JAR artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: everage-${{ steps.get_version.outputs.VERSION }}.jar
           path: build/libs/*.jar
