@@ -74,7 +74,13 @@ jobs:
       - name: Get version from build.gradle.kts
         id: get_version
         run: |
-          VERSION=$(grep "^version = " build.gradle.kts | cut -d"'" -f2)
+          VERSION=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{print $2}')
+    
+          # Check if we got the version
+          if [ -z "$VERSION" ]; then
+            echo "Error: Could not extract version"
+            exit 1
+          fi
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
