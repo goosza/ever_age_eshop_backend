@@ -14,10 +14,10 @@ env:
 
 jobs:
   # ============================================
-  # Job 1: Testing
+  # Job 1: Testing and build
   # ============================================
-  test:
-    name: Run Tests
+  build:
+    name: Build anf Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -33,7 +33,7 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
-
+      # Run tests
       - name: Run tests
         run: ./gradlew test --no-daemon
 
@@ -46,36 +46,15 @@ jobs:
           reporter: java-junit
           fail-on-error: false
 
-  # ============================================
-  # Job 2: Build jar JAR
-  # ============================================
-  build:
-    name: Build JAR
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: gradle
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build with Gradle
+      # Build jar
+      - name: Build Jar
         run: ./gradlew bootJar --no-daemon
 
-      - name: Get version from build.gradle.kts
+      - name: Get version
         id: get_version
         run: |
           VERSION=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{print $2}')
-    
+
           # Check if we got the version
           if [ -z "$VERSION" ]; then
             echo "Error: Could not extract version"
@@ -84,14 +63,15 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
-      - name: Upload JAR artifact
+      - name: Upload JAR artifact (optional)
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
-          name: everage-${{ steps.get_version.outputs.VERSION }}.jar
+          name: everage-${{ steps.get_version.outputs.VERSION }}
           path: build/libs/*.jar
           retention-days: 30
 
-      # Optional: Load JAR in GitHub Release (only on release creation)
+      # Load JAR in GitHub Release (only on release creation)
       - name: Upload JAR to Release
         if: github.event_name == 'release'
         uses: actions/upload-release-asset@v1
@@ -104,7 +84,7 @@ jobs:
           asset_content_type: application/java-archive
 
   # ============================================
-  # Job 3: Build and publish Docker image
+  # Job 2: Docker image with built jar
   # ============================================
   build-and-push-docker:
     name: Build and Push Docker Image
@@ -119,6 +99,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Download built jar from prev. job
+      - name: Download JAR artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: .
+
+      # Rename JAR for Dockerfile
+      - name: Prepare JAR for Docker
+        run: |
+          mv *.jar everage.jar
+          ls -lh everage.jar
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -126,24 +119,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata for Docker
+      - name: Extract metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # For main branch - latest и git SHA
             type=raw,value=latest,enable={{is_default_branch}}
             type=sha,prefix={{branch}}-
-            # For develop branch
             type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
-            # For tags (if release created)
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Build Docker image with JAR
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -155,10 +144,10 @@ jobs:
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
 
       - name: Image digest
-        run: echo "Image pushed with digest ${{ steps.docker_build.outputs.digest }}"
+        run: echo "Image pushed with tags ${{ steps.meta.outputs.tags }}"
 
   # ============================================
-  # Job 4: Deploy (exmaple for VPS)
+  # Job 3: Deploy (exmaple for VPS)
   # ============================================
   deploy:
     name: Deploy to Production

@@ -1,21 +1,4 @@
 # Многоэтапная сборка для оптимизации размера образа
-FROM gradle:8.6-jdk21-alpine AS build
-WORKDIR /app
-
-# Копируем gradle файлы для кэширования зависимостей
-COPY build.gradle.kts settings.gradle.kts gradle.properties ./
-COPY gradle ./gradle
-
-# Load dependencies (will be cached)
-RUN gradle dependencies --no-daemon
-
-# Copy source code
-COPY src ./src
-
-# Build application
-RUN gradle bootJar --no-daemon
-
-# Final image
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
@@ -23,8 +6,7 @@ WORKDIR /app
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-# Copy jar from build stage
-COPY --from=build /app/build/libs/*.jar everage.jar
+COPY everage.jar everage.jar
 
 # Expose port
 EXPOSE 8080
