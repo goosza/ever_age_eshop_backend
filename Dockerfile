@@ -3,10 +3,10 @@ FROM gradle:8.6-jdk21-alpine AS build
 WORKDIR /app
 
 # Копируем gradle файлы для кэширования зависимостей
-COPY build.gradle.kts settings.gradle.kts ./
+COPY build.gradle.kts settings.gradle.kts gradle.properties ./
 COPY gradle ./gradle
 
-# Загружаем зависимости (будет закэшировано)
+# Load dependencies (will be cached)
 RUN gradle dependencies --no-daemon
 
 # Copy source code
