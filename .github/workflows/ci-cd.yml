@@ -19,6 +19,8 @@ jobs:
   build:
     name: Build anf Run Tests
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
 
     steps:
       - name: Checkout code
@@ -111,7 +113,14 @@ jobs:
       # Rename JAR for Dockerfile
       - name: Prepare JAR for Docker
         run: |
-          mv *.jar everage.jar
+          # Find JAR file
+          JAR_FILE=$(ls *.jar | head -n 1)
+          echo "Found JAR: $JAR_FILE"
+            
+          # Rename for Dockerfile
+          mv "$JAR_FILE" everage.jar
+            
+          echo "Prepared JAR:"
           ls -lh everage.jar
 
       - name: Log in to GitHub Container Registry
