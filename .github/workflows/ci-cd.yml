@@ -215,7 +215,6 @@ jobs:
       github.ref == 'refs/heads/main'
     environment:
       name: development
-      url: https://${{ secrets.DEV_SERVER_IP }}:8080
 
     steps:
       - name: Checkout code
@@ -287,7 +286,6 @@ jobs:
       github.event.inputs.environment == 'dev'
     environment:
       name: development
-      url: https://${{ secrets.DEV_SERVER_IP }}:8080
 
     steps:
       - uses: actions/checkout@v4
@@ -342,7 +340,6 @@ jobs:
       startsWith(github.ref, 'refs/tags/v')
     environment:
       name: production
-      url: https://everage.app
 
     steps:
       - uses: actions/checkout@v4
@@ -428,7 +425,6 @@ jobs:
       github.event.inputs.environment == 'prod'
     environment:
       name: production
-      url: https://everage.app
 
     steps:
       - uses: actions/checkout@v4
