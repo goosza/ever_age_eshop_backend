@@ -267,6 +267,8 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.DEV_SSH_PASSPHRASE }}
           script: |
+            set -e
+            
             cd /opt/everage
             
             echo "📦 Deploying main branch to Development..."
@@ -340,6 +342,8 @@ jobs:
           key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
           passphrase: ${{ secrets.DEV_SSH_PASSPHRASE }}
           script: |
+            set -e
+            
             cd /opt/everage
             
             BRANCH_TAG="${{ needs.build.outputs.branch_tag }}"
@@ -399,6 +403,8 @@ jobs:
           username: ${{ secrets.PROD_SERVER_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           script: |
+            set -e
+            
             cd /opt/everage-prod
             
             echo "🏭 Deploying v${{ steps.get_version.outputs.VERSION }} to Production..."
@@ -485,6 +491,8 @@ jobs:
           username: ${{ secrets.PROD_SERVER_USERNAME }}
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           script: |
+            set -e
+            
             cd /opt/everage-prod
             
             BRANCH_TAG="${{ needs.build.outputs.branch_tag }}"
