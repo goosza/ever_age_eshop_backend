@@ -1,100 +1,170 @@
 version: '3.8'
 
 services:
+  # ============================================
+  # Spring Boot Application (Local Dev)
+  # ============================================
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: everageapp
+    container_name: everage-app-local
     ports:
       - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=dev
-      - DATABASE_URL=jdbc:postgresql://postgres:5432/everage_db
+      - SPRING_PROFILES_ACTIVE=local
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/everage
       - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=postgres
+      - SERVER_URL=http://localhost:8080
+      - SERVER_PORT=8080
+      - JAVA_OPTS=-Xmx512m -Xms256m
     depends_on:
       postgres:
         condition: service_healthy
     networks:
-      - app-network
+      - everage-local-network
     labels:
       logging: "promtail"
-      application: "everageapp"
+      application: "everage-local"
+      environment: "local"
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
+  # ============================================
+  # PostgreSQL Database (Local)
+  # ============================================
   postgres:
     image: postgres:15-alpine
-    container_name: everage_postgres
+    container_name: postgres-local
     environment:
-      - POSTGRES_DB=everage_db
+      - POSTGRES_DB=everage
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-local-data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     networks:
-      - app-network
+      - everage-local-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d everage"]
       interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped
 
-  loki:
-    image: grafana/loki:2.9.3
-    container_name: everage-loki
-    ports:
-      - "3100:3100"
-    volumes:
-      - ./loki-config.yml:/etc/loki/local-config.yaml
-      - loki-data:/loki
-    command: -config.file=/etc/loki/local-config.yaml
-    networks:
-      - app-network
-    restart: unless-stopped
+  # ============================================
+  # Loki - Log Aggregation (Optional for local)
+  # Uncomment to enable local log aggregation
+  # ============================================
+  # loki:
+  #   image: grafana/loki:2.9.3
+  #   container_name: loki-local
+  #   ports:
+  #     - "3100:3100"
+  #   volumes:
+  #     - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+  #     - loki-local-data:/loki
+  #   command: -config.file=/etc/loki/local-config.yaml
+  #   networks:
+  #     - everage-local-network
+  #   restart: unless-stopped
 
-  promtail:
-    image: grafana/promtail:2.9.3
-    container_name: everage-promtail
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /var/lib/docker/containers:/var/lib/docker/containers:ro
-      - ./promtail-config.yml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
-    networks:
-      - app-network
-    depends_on:
-      - loki
-    restart: unless-stopped
+  # ============================================
+  # Promtail - Log Collector (Optional for local)
+  # Uncomment to enable log collection locally
+  # Note: Requires loki-config.yml and promtail-config.yml files
+  # ============================================
+  # promtail:
+  #   image: grafana/promtail:3.3.1
+  #   container_name: promtail-local
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
+  #     - ./promtail-config.yml:/etc/promtail/config.yml:ro
+  #   command: -config.file=/etc/promtail/config.yml
+  #   networks:
+  #     - everage-local-network
+  #   depends_on:
+  #     - loki
+  #   restart: unless-stopped
 
-  grafana:
-    image: grafana/grafana:10.2.3
-    container_name: everage-grafana
-    ports:
-      - "3000:3000"
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=http://localhost:3000
-      - GF_INSTALL_PLUGINS=
-    volumes:
-      - grafana-data:/var/lib/grafana
-      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
-    networks:
-      - app-network
-    depends_on:
-      - loki
-    restart: unless-stopped
+  # ============================================
+  # Grafana - Monitoring & Visualization (Optional for local)
+  # Uncomment to enable monitoring dashboard locally
+  # Access at: http://localhost:3000 (admin/admin)
+  # ============================================
+  # grafana:
+  #   image: grafana/grafana:10.2.3
+  #   container_name: grafana-local
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - GF_SECURITY_ADMIN_USER=admin
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin
+  #     - GF_USERS_ALLOW_SIGN_UP=false
+  #     - GF_SERVER_ROOT_URL=http://localhost:3000
+  #   volumes:
+  #     - grafana-local-data:/var/lib/grafana
+  #     # Uncomment if you have grafana-datasources.yml file:
+  #     # - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+  #   networks:
+  #     - everage-local-network
+  #   depends_on:
+  #     - loki
+  #   restart: unless-stopped
+
+  # ============================================
+  # Portainer - Docker Management (Optional for local)
+  # Uncomment to manage Docker containers via web UI
+  # Access at: https://localhost:9443 or http://localhost:9000
+  # ============================================
+  # portainer:
+  #   image: portainer/portainer-ce:latest
+  #   container_name: portainer-local
+  #   ports:
+  #     - "9443:9443"
+  #     - "9000:9000"
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - portainer-local-data:/data
+  #   networks:
+  #     - everage-local-network
+  #   restart: unless-stopped
+
+  # ============================================
+  # Adminer - Database Web UI (Optional for local)
+  # Uncomment for easy database management via web interface
+  # Access at: http://localhost:8081
+  # Login: postgres/postgres/everage
+  # ============================================
+  # adminer:
+  #   image: adminer:latest
+  #   container_name: adminer-local
+  #   ports:
+  #     - "8081:8080"
+  #   environment:
+  #     - ADMINER_DEFAULT_SERVER=postgres
+  #   networks:
+  #     - everage-local-network
+  #   depends_on:
+  #     - postgres
+  #   restart: unless-stopped
 
 networks:
-  app-network:
+  everage-local-network:
     driver: bridge
 
 volumes:
-  postgres-data:
-  loki-data:
-  grafana-data:
+  postgres-local-data:
+  # Uncomment volumes below if you enable corresponding services:
+  # loki-local-data:
+  # grafana-local-data:
+  # portainer-local-data:
+  # redis-local-data:
