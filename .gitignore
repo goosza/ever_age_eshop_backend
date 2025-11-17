@@ -34,3 +34,8 @@ build
 
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
+
+# Environment
+.env
+.env.*
+!.env.example

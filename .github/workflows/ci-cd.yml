@@ -119,6 +119,45 @@ jobs:
           asset_name: everage-${{ steps.get_version.outputs.VERSION }}.jar
           asset_content_type: application/java-archive
 
+    # ============================================
+    # NEW: Publish to GitHub Packages
+    # ============================================
+  publish-packages:
+    name: 📦 Publish to GitHub Packages
+    needs: build
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' && 
+      (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v'))
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission
+        run: chmod +x gradlew
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish --no-daemon
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Published successfully
+        run: |
+          echo "✅ Published to GitHub Packages!"
+          echo "Package: https://github.com/${{ github.repository }}/packages"
+          echo "Version: ${{ needs.build.outputs.version }}"
+
   # ============================================
   # Job 2: Docker image with built jar
   # ============================================

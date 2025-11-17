@@ -1,3 +1,5 @@
+import org.springframework.boot.gradle.tasks.bundling.BootJar
+
 plugins {
     java
     id("maven-publish")
@@ -6,6 +8,16 @@ plugins {
 
 group = "com.everage.eshop"
 version = "1.0.0-SNAPSHOT"
+
+
+// Apply a specific Java toolchain to ease working on different environments.
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
 
 repositories {
     // Use Maven Central for resolving dependencies.
@@ -47,10 +59,70 @@ dependencies {
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-// Apply a specific Java toolchain to ease working on different environments.
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+tasks.named<BootJar>("bootJar") {
+    archiveFileName.set("everage-service.jar")
+    launchScript()
+}
+
+// Turn off default jar task (we need only bootJar)
+tasks.named<Jar>("jar") {
+    enabled = false
+}
+
+// ========================================
+// Maven Publishing Configuration
+// ========================================
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "com.everage.eshop"
+            artifactId = "everage-service"
+            version = project.version.toString()
+
+            // Publish bootJar
+            artifact(tasks.named("bootJar"))
+        }
+    }
+
+    repositories {
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/${getGithubRepository()}")
+            credentials {
+                username = getGithubActor()
+                password = getGithubToken()
+            }
+        }
+    }
+}
+
+// ========================================
+// Helper Functions
+// ========================================
+fun getGithubRepository(): String {
+    return System.getenv("GITHUB_REPOSITORY")
+        ?: findProperty("github.repository")?.toString()
+        ?: "goosza/everage"
+}
+
+fun getGithubActor(): String {
+    return System.getenv("GITHUB_ACTOR")
+        ?: findProperty("gpr.user")?.toString()
+        ?: ""
+}
+
+fun getGithubToken(): String {
+    return System.getenv("GITHUB_TOKEN")
+        ?: findProperty("gpr.key")?.toString()
+        ?: ""
+}
+
+fun getVersionFromGit(): String {
+    val tagVersion = System.getenv("GITHUB_REF")
+    return if (tagVersion != null && tagVersion.startsWith("refs/tags/v")) {
+        tagVersion.removePrefix("refs/tags/v")
+    } else {
+        project.version.toString()
     }
 }
 
