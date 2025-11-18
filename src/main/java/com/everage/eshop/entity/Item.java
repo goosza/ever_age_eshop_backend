@@ -31,7 +31,7 @@ public class Item {
     private String description;
     @Type(JsonType.class)
     @Column(nullable = false, columnDefinition = "jsonb")
-    private List<String> imageUrls = new ArrayList<>();;
+    private List<String> imageUrls = new ArrayList<>();
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
     @Enumerated(EnumType.STRING)
