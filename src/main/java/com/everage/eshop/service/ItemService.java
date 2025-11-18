@@ -74,8 +74,11 @@ public class ItemService {
         item.setDescription(itemDto.description());
         item.setPrice(itemDto.price());
         item.setQuantity(itemDto.quantity());
-        if (itemDto.imageUrls() != null && !itemDto.imageUrls().isEmpty()) {
+        if (itemDto.imageUrls() != null) {
             item.setImageUrls(new ArrayList<>(itemDto.imageUrls()));
+        } else {
+            // If null, clear
+            item.setImageUrls(new ArrayList<>());
         }
         // Validate item status against quantity
         validateItemStatus(item, itemDto.status());

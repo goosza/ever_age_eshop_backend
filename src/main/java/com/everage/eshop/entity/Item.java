@@ -1,5 +1,6 @@
 package com.everage.eshop.entity;
 
+import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -8,6 +9,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import org.hibernate.annotations.Type;
 import lombok.Data;
 
 import java.util.List;
@@ -26,8 +28,10 @@ public class Item {
     @Column(nullable = false)
     private String name;
     private String description;
+    @Type(JsonType.class)
+    @Column(columnDefinition = "jsonb")
     private List<String> imageUrls;
-    @Column(nullable = false)
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
