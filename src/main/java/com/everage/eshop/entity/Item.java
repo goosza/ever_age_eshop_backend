@@ -10,6 +10,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 import java.math.BigDecimal;
 
@@ -25,6 +26,7 @@ public class Item {
     @Column(nullable = false)
     private String name;
     private String description;
+    private List<String> imageUrls;
     @Column(nullable = false)
     private BigDecimal price;
     @Enumerated(EnumType.STRING)

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import com.everage.eshop.entity.ItemStatus;
@@ -73,14 +74,17 @@ public class ItemService {
         item.setDescription(itemDto.description());
         item.setPrice(itemDto.price());
         item.setQuantity(itemDto.quantity());
-        
+        if (itemDto.imageUrls() != null && !itemDto.imageUrls().isEmpty()) {
+            item.setImageUrls(new ArrayList<>(itemDto.imageUrls()));
+        }
         // Validate item status against quantity
         validateItemStatus(item, itemDto.status());
 //        itemRepository.persist(item);
         ItemDto result = itemMapper.toDto(item);
         log.info("Item updated successfully with id: {}, name: {}", result.uuid(), result.name());
-        log.info("Updated info: name={}, description={}, price={}, status={}, quantity={}",
-                result.name(), result.description(), result.price(), result.status(), result.quantity());
+        log.info("Updated info: name={}, description={}, price={}, status={}, quantity={}, images count={}",
+                result.name(), result.description(), result.price(), result.status(),
+                result.quantity(), result.imageUrls() != null ? result.imageUrls().size() : 0);
         return result;
     }
 

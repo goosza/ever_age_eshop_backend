@@ -80,7 +80,7 @@ class ItemControllerTest {
     @Test
     void addItem_WithValidData_ShouldCreateItem() throws Exception {
         // Given
-        ItemDto inputDto = new ItemDto(null, "New Item", "Description", BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 10);
+        ItemDto inputDto = new ItemDto(null, "New Item", "Description", List.of("url1"), BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 10);
         ItemDto resultDto = createItemDto();
         when(itemService.createItem(any(ItemDto.class))).thenReturn(resultDto);
 
@@ -96,7 +96,7 @@ class ItemControllerTest {
     @Test
     void addItem_WithDuplicateName_ShouldReturn409() throws Exception {
         // Given
-        ItemDto inputDto = new ItemDto(null, "Existing Item", "Description", BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 10);
+        ItemDto inputDto = new ItemDto(null, "Existing Item", "Description", List.of("url1"), BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 10);
         when(itemService.createItem(any(ItemDto.class))).thenThrow(new ItemAlreadyExistsException("Item already exists"));
 
         // When & Then
@@ -111,7 +111,7 @@ class ItemControllerTest {
     @Test
     void addItem_WithInvalidStatus_ShouldReturn400() throws Exception {
         // Given
-        ItemDto inputDto = new ItemDto(null, "New Item", "Description", BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 0);
+        ItemDto inputDto = new ItemDto(null, "New Item", "Description", List.of("url1"), BigDecimal.valueOf(29.99), ItemStatus.ACTIVE, 0);
         when(itemService.createItem(any(ItemDto.class))).thenThrow(new InvalidItemStatusException("Invalid status"));
 
         // When & Then
@@ -127,7 +127,7 @@ class ItemControllerTest {
     void updateItem_WithValidData_ShouldUpdateItem() throws Exception {
         // Given
         UUID id = UUID.randomUUID();
-        ItemDto inputDto = new ItemDto(null, "Updated Item", "Updated Description", BigDecimal.valueOf(39.99), ItemStatus.ACTIVE, 15);
+        ItemDto inputDto = new ItemDto(null, "Updated Item", "Updated Description", List.of("url1"), BigDecimal.valueOf(39.99), ItemStatus.ACTIVE, 15);
         ItemDto resultDto = createItemDto();
         when(itemService.updateItem(eq(id), any(ItemDto.class))).thenReturn(resultDto);
 
@@ -157,6 +157,12 @@ class ItemControllerTest {
     }
 
     private ItemDto createItemDto() {
-        return new ItemDto(UUID.randomUUID(), "Test Item", "Test Description", BigDecimal.valueOf(19.99), ItemStatus.ACTIVE, 10);
+        return new ItemDto(UUID.randomUUID(),
+                "Test Item",
+                "Test Description",
+                List.of("url1"),
+                BigDecimal.valueOf(19.99),
+                ItemStatus.ACTIVE,
+                10);
     }
 }

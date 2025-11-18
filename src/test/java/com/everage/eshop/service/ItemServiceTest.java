@@ -124,7 +124,7 @@ class ItemServiceTest {
     @Test
     void createItem_WithZeroQuantityAndActiveStatus_ShouldThrowException() {
         // Given
-        ItemDto inputDto = new ItemDto(null, "Test Item", "Description", BigDecimal.valueOf(19.99), ItemStatus.ACTIVE, 0);
+        ItemDto inputDto = new ItemDto(null, "Test Item", "Description", List.of("url1"), BigDecimal.valueOf(19.99), ItemStatus.ACTIVE, 0);
         Item item = createItemWithQuantity(0);
         
         when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
@@ -137,7 +137,7 @@ class ItemServiceTest {
     @Test
     void createItem_WithPositiveQuantityAndOutOfStockStatus_ShouldThrowException() {
         // Given
-        ItemDto inputDto = new ItemDto(null, "Test Item", "Description", BigDecimal.valueOf(19.99), ItemStatus.OUT_OF_STOCK, 5);
+        ItemDto inputDto = new ItemDto(null, "Test Item", "Description", List.of("url1"), BigDecimal.valueOf(19.99), ItemStatus.OUT_OF_STOCK, 5);
         Item item = createItemWithQuantity(5);
         
         when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
@@ -263,7 +263,13 @@ class ItemServiceTest {
     }
 
     private ItemDto createItemDto() {
-        return new ItemDto(UUID.randomUUID(), "Test Item", "Description", BigDecimal.valueOf(19.99), ItemStatus.ACTIVE, 10);
+        return new ItemDto(UUID.randomUUID(),
+                "Test Item",
+                "Description",
+                List.of("url1"),
+                BigDecimal.valueOf(19.99),
+                ItemStatus.ACTIVE,
+                10);
     }
 
     private Item createItemWithQuantity(int quantity) {
