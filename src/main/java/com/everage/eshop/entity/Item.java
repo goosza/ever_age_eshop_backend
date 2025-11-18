@@ -12,6 +12,7 @@ import jakarta.persistence.EnumType;
 import org.hibernate.annotations.Type;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.math.BigDecimal;
@@ -29,8 +30,8 @@ public class Item {
     private String name;
     private String description;
     @Type(JsonType.class)
-    @Column(columnDefinition = "jsonb")
-    private List<String> imageUrls;
+    @Column(nullable = false, columnDefinition = "jsonb")
+    private List<String> imageUrls = new ArrayList<>();;
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
     @Enumerated(EnumType.STRING)
