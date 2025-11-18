@@ -1,5 +1,6 @@
 package com.everage.eshop.dto;
 
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.math.BigDecimal;
 import java.util.List;
@@ -21,8 +22,16 @@ public record ItemDto(
                 example = "Powerful gaming laptop with RTX 4060 GPU",
                 maxLength = 1000)
         String description,
-        @Schema(description = "Item images",
-                example = "/path/to/image")
+        @ArraySchema(
+                schema = @Schema(
+                        description = "Item images",
+                        implementation = String.class,
+                        example = "/path/to/image"
+                ),
+                arraySchema = @Schema(
+                        description = "List of item image URLs"
+                )
+        )
         List<String> imageUrls,
         @Schema(description = "Item price",
                 example = "1299.99",
@@ -30,7 +39,7 @@ public record ItemDto(
                 minimum = "0")
         BigDecimal price,
         @Schema(description = "Item status (availability)",
-                example = "AVAILABLE",
+                example = "ACTIVE",
                 required = true,
                 implementation = ItemStatus.class)
         ItemStatus status,
