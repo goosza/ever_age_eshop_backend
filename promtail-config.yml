@@ -37,7 +37,7 @@ scrape_configs:
       # Parse JSON if its possible
       - json:
           expressions:
-            timestamp: "@timestamp"
+            timestamp: '"@timestamp"'
             level: level
             logger: logger
             message: message
