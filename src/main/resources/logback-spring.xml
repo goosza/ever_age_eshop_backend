@@ -43,10 +43,10 @@
     <!-- Profile for dev -->
     <springProfile name="dev">
         <root level="INFO">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="JSON_CONSOLE"/>
         </root>
         <logger name="com.everage.eshop" level="DEBUG" additivity="false">
-            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="JSON_CONSOLE"/>
         </logger>
     </springProfile>
 
