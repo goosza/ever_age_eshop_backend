@@ -8,6 +8,7 @@
     <property name="severity" value="error"/>
     <property name="fileExtensions" value="java"/>
 
+
     <!-- For tests: allow static wildcard imports but forbid class wildcard imports -->
     <module name="TreeWalker">
         <module name="AvoidStarImport">

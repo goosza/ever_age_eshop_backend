@@ -82,10 +82,18 @@ checkstyle {
 
 tasks.named<Checkstyle>("checkstyleMain") {
     configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle-main.xml")
+
+    // Exclude generated code and build artifacts
+    exclude("**/generated/**")
+    exclude("**/build/**")
 }
 
 tasks.named<Checkstyle>("checkstyleTest") {
     configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle-test.xml")
+
+    // Exclude generated code and build artifacts
+    exclude("**/generated/**")
+    exclude("**/build/**")
 }
 
 tasks.withType<Checkstyle> {
