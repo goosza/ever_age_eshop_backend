@@ -1,6 +1,5 @@
 package com.everage.eshop.dto;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public record CheckoutRequest(
@@ -9,7 +8,6 @@ public record CheckoutRequest(
         String lastName,
         String email,
         String phone,
-        LocalDate birthDate,
 
         // Delivery Address
         String address,
@@ -18,7 +16,7 @@ public record CheckoutRequest(
         String country,
 
         // Cart Items
-        List<CartItemRequest> items,
+        List<OrderItemRequest> items,
 
         // Optional Notes
         String customerNotes

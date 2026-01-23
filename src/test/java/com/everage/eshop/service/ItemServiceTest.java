@@ -1,7 +1,7 @@
 package com.everage.eshop.service;
 
 import com.everage.eshop.dto.ItemDto;
-import com.everage.eshop.dto.ItemMapper;
+import com.everage.eshop.dto.mapper.ItemMapper;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.exception.ItemNotFoundException;
 import com.everage.eshop.exception.ItemAlreadyExistsException;

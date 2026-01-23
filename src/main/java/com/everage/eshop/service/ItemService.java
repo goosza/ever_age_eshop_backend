@@ -1,7 +1,7 @@
 package com.everage.eshop.service;
 
 import com.everage.eshop.dto.ItemDto;
-import com.everage.eshop.dto.ItemMapper;
+import com.everage.eshop.dto.mapper.ItemMapper;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.exception.ItemAlreadyExistsException;
 import com.everage.eshop.exception.ItemNotFoundException;
@@ -33,10 +33,10 @@ public class ItemService {
     }
 
     @Transactional(readOnly = true)
-    public ItemDto getItemById(UUID id) {
-        log.info("Fetching item by id: {}", id);
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + id));
+    public ItemDto getItemById(UUID uuid) {
+        log.info("Fetching item by uuid: {}", uuid);
+        Item item = itemRepository.findById(uuid)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
         log.info("Found item: {}", item.getName());
         return itemMapper.toDto(item);
     }
@@ -54,18 +54,18 @@ public class ItemService {
         
         itemRepository.persist(item);
         ItemDto result = itemMapper.toDto(item);
-        log.info("Item created successfully with id: {}, name: {}", result.uuid(), result.name());
+        log.info("Item created successfully with uuid: {}, name: {}", result.uuid(), result.name());
         return result;
     }
 
     @Transactional
-    public ItemDto updateItem(UUID id, ItemDto itemDto) {
-        log.info("Updating item with id: {}, name: {}", id, itemDto.name());
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + id));
+    public ItemDto updateItem(UUID uuid, ItemDto itemDto) {
+        log.info("Updating item with uuid: {}, name: {}", uuid, itemDto.name());
+        Item item = itemRepository.findById(uuid)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
 
         itemRepository.findByName(itemDto.name())
-                .filter(existingItem -> !existingItem.getUuid().equals(id))
+                .filter(existingItem -> !existingItem.getUuid().equals(uuid))
                 .ifPresent(existingItem -> {
                     throw new ItemAlreadyExistsException("Name already taken");
                 });
@@ -84,7 +84,7 @@ public class ItemService {
         validateItemStatus(item, itemDto.status());
 //        itemRepository.persist(item);
         ItemDto result = itemMapper.toDto(item);
-        log.info("Item updated successfully with id: {}, name: {}", result.uuid(), result.name());
+        log.info("Item updated successfully with uuid: {}, name: {}", result.uuid(), result.name());
         log.info("Updated info: name={}, description={}, price={}, status={}, quantity={}, images count={}",
                 result.name(), result.description(), result.price(), result.status(),
                 result.quantity(), result.imageUrls() != null ? result.imageUrls().size() : 0);
@@ -115,15 +115,15 @@ public class ItemService {
 
     /**
      * Decreases item amount (for ex., after purchase)
-     * @param id {@link UUID}
+     * @param uuid {@link UUID}
      * @param amount {@link Integer}
      * @return {@link ItemDto}
      */
     @Transactional
-    public ItemDto decreaseQuantity(UUID id, Integer amount) {
-        log.info("Decreasing quantity for item {} by {}", id, amount);
-        Item item = itemRepository.findById(id)
-                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + id));
+    public ItemDto decreaseQuantity(UUID uuid, Integer amount) {
+        log.info("Decreasing quantity for item {} by {}", uuid, amount);
+        Item item = itemRepository.findById(uuid)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
         
         int newQuantity = Math.max(0, item.getQuantity() - amount);
         item.setQuantity(newQuantity);

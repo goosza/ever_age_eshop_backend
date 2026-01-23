@@ -1,15 +1,13 @@
 package com.everage.eshop.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record OrderItemDTO(
-        Long id,
-        UUID itemId,
-        String itemName,
-        String itemDescription,
-        String itemImageUrl,
+        UUID id,
+        UUID itemUuid,
         Integer quantity,
         BigDecimal price,
-        BigDecimal subtotal
+        LocalDateTime createdAt
 ) {}

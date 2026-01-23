@@ -3,12 +3,12 @@ package com.everage.eshop.dto;
 import com.everage.eshop.entity.OrderStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 public record OrderDTO(
-        Long id,
+        UUID id,
         String orderNumber,
 
         // Customer info
@@ -16,7 +16,6 @@ public record OrderDTO(
         String lastName,
         String email,
         String phone,
-        LocalDate birthDate,
 
         // Address
         String address,
@@ -26,27 +25,13 @@ public record OrderDTO(
 
         // Order details
         List<OrderItemDTO> items,
-        Integer itemsCount,
         BigDecimal totalAmount,
         OrderStatus status,
-        String statusDisplay,
-
-        // Shipping
-        String shippingProvider,
-        String trackingNumber,
-        String trackingUrl,
 
         // Notes
         String customerNotes,
-        String adminNotes,
-
-        // Status history
-        List<OrderStatusHistoryDTO> statusHistory,
 
         // Timestamps
         LocalDateTime createdAt,
-        LocalDateTime updatedAt,
-        LocalDateTime confirmedAt,
-        LocalDateTime shippedAt,
-        LocalDateTime deliveredAt
+        LocalDateTime updatedAt
 ) {}

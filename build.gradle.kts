@@ -3,6 +3,7 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 plugins {
     java
     id("maven-publish")
+    id("checkstyle")
     id("org.springframework.boot") version "3.5.7"
 }
 
@@ -69,6 +70,34 @@ tasks.named<BootJar>("bootJar") {
 // Turn off default jar task (we need only bootJar)
 tasks.named<Jar>("jar") {
     enabled = false
+}
+
+// ========================================
+// CheckStyle Configuration
+// ========================================
+checkstyle {
+    toolVersion = "10.12.3"
+    configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle-main.xml")
+}
+
+tasks.named<Checkstyle>("checkstyleMain") {
+    configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle-main.xml")
+}
+
+tasks.named<Checkstyle>("checkstyleTest") {
+    configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle-test.xml")
+}
+
+tasks.withType<Checkstyle> {
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+// Make build depend on checkstyleMain to check imports automatically
+tasks.named("build") {
+    dependsOn("checkstyleMain")
 }
 
 // ========================================

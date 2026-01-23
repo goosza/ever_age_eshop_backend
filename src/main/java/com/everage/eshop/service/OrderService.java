@@ -1,20 +1,15 @@
 package com.everage.eshop.service;
 
-//import com.everage.eshop.dto.;
 import com.everage.eshop.dto.CheckoutRequest;
 import com.everage.eshop.dto.OrderDTO;
-import com.everage.eshop.dto.CartItemRequest;
-//import com.everage.eshop.entity.*;
+import com.everage.eshop.dto.OrderItemRequest;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderItem;
-import com.everage.eshop.entity.OrderStatus;
 import com.everage.eshop.entity.ItemStatus;
-import com.everage.eshop.entity.OrderStatusHistory;
 import com.everage.eshop.exception.InsufficientStockException;
 import com.everage.eshop.exception.ItemNotFoundException;
-import com.everage.eshop.exception.OrderNotFoundException;
-import com.everage.eshop.dto.OrderMapper;
+import com.everage.eshop.dto.mapper.OrderMapper;
 import com.everage.eshop.repository.ItemRepository;
 import com.everage.eshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +27,6 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
     private final ItemService itemService;
-    private final EmailService emailService;
     private final OrderMapper orderMapper;
 
     @Transactional
@@ -40,16 +34,16 @@ public class OrderService {
         log.info("Creating order for email: {}", request.email());
 
         // Validate all items exist and have stock
-        for (CartItemRequest cartItem : request.items()) {
-            Item item = itemRepository.findById(cartItem.itemId())
-                    .orElseThrow(() -> new ItemNotFoundException("Item not found: " + cartItem.itemId()));
+        for (OrderItemRequest itemRequest : request.items()) {
+            Item item = itemRepository.findById(itemRequest.uuid())
+                    .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemRequest.uuid()));
 
             // Check stock availability
-            if (item.getQuantity() < cartItem.quantity()) {
+            if (item.getQuantity() < itemRequest.quantity()) {
                 throw new InsufficientStockException(
                         "Insufficient stock for item: " + item.getName() +
                                 ". Available: " + item.getQuantity() +
-                                ", Requested: " + cartItem.quantity()
+                                ", Requested: " + itemRequest.quantity()
                 );
             }
 
@@ -66,7 +60,6 @@ public class OrderService {
         order.setLastName(request.lastName());
         order.setEmail(request.email());
         order.setPhone(request.phone());
-        order.setBirthDate(request.birthDate());
         order.setAddress(request.address());
         order.setCity(request.city());
         order.setPostalCode(request.postalCode());
@@ -74,33 +67,26 @@ public class OrderService {
         order.setCustomerNotes(request.customerNotes());
 
         // Add Order Items
-        for (CartItemRequest cartItem : request.items()) {
-            Item item = itemRepository.findById(cartItem.itemId())
+        for (OrderItemRequest itemRequest : request.items()) {
+            Item item = itemRepository.findById(itemRequest.uuid())
                     .orElseThrow(() -> new ItemNotFoundException("Item not found"));
 
             OrderItem orderItem = new OrderItem();
             orderItem.setItem(item);
-            orderItem.setQuantity(cartItem.quantity());
+            orderItem.setQuantity(itemRequest.quantity());
             orderItem.setPrice(item.getPrice());
 
             order.addItem(orderItem);
 
             // Decrease item quantity
-            itemService.decreaseQuantity(item.getUuid(), cartItem.quantity());
+            itemService.decreaseQuantity(item.getUuid(), itemRequest.quantity());
 
-            log.info("Added item to order: {} x{}", item.getName(), cartItem.quantity());
+            log.info("Added item to order: {} x{}", item.getName(), itemRequest.quantity());
         }
 
         // Calculate totals
         order.calculateTotals();
 
-        // Add initial status history
-        OrderStatusHistory initialHistory = new OrderStatusHistory();
-        initialHistory.setOldStatus(null);
-        initialHistory.setNewStatus(OrderStatus.PENDING);
-        initialHistory.setChangedBy("SYSTEM");
-        initialHistory.setNotes("Order created");
-        order.addStatusHistory(initialHistory);
 
         // Save Order
         order = orderRepository.persist(order);
@@ -108,13 +94,6 @@ public class OrderService {
         log.info("Order created successfully: {}, Total: {}",
                 order.getOrderNumber(), order.getTotalAmount());
 
-        // Send confirmation email
-        try {
-            emailService.sendOrderConfirmationEmail(order);
-        } catch (Exception e) {
-            log.error("Failed to send order confirmation email", e);
-        }
-        // Map to DTO using MapStruct
         return orderMapper.toDto(order);
     }
 
@@ -123,7 +102,7 @@ public class OrderService {
         log.info("Fetching order by number: {}", orderNumber);
 
         Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderNumber));
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
         log.info("Found order: {}", order.getOrderNumber());
         return orderMapper.toDto(order);
     }

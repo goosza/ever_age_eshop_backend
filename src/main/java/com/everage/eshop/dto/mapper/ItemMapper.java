@@ -1,5 +1,6 @@
-package com.everage.eshop.dto;
+package com.everage.eshop.dto.mapper;
 
+import com.everage.eshop.dto.ItemDto;
 import com.everage.eshop.entity.Item;
 import org.mapstruct.Mapper;
 
