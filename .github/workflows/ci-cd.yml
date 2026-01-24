@@ -382,7 +382,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && 
-      startsWith(github.ref, 'refs/tags/v')
+      startsWith(github.ref, 'refs/tags/v') &&
+      false
     environment:
       name: production
 
@@ -469,7 +470,8 @@ jobs:
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' && 
-      github.event.inputs.environment == 'prod'
+      github.event.inputs.environment == 'prod' &&
+      false
     environment:
       name: production
 

@@ -1,0 +1,58 @@
+name: Cleanup Old Packages
+
+on:
+  schedule:
+    - cron: '0 2 * * 0'
+  workflow_dispatch:  # manual trigger
+
+permissions:
+  packages: write
+
+jobs:
+  cleanup-maven:
+    name: 🧹 Cleanup Maven SNAPSHOT
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete old SNAPSHOT versions
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: 'com.everage.eshop.everage-service'
+          package-type: 'maven'
+          min-versions-to-keep: 5
+          delete-only-pre-release-versions: "true"
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: echo "✅ Cleaned up old Maven SNAPSHOTs"
+
+  cleanup-docker:
+    name: 🧹 Cleanup Docker Images
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Delete old untagged images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: 'ever_age_eshop_backend'  # name of repository
+          package-type: 'container'
+          min-versions-to-keep: 10  # keep last 10 images
+          delete-only-untagged-versions: 'true'  # delete only untagged
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Delete old dev/feature images
+        uses: actions/delete-package-versions@v4
+        with:
+          package-name: 'ever_age_eshop_backend'
+          package-type: 'container'
+          min-versions-to-keep: 5
+          # Delete images older than 30 days (except latest, main, develop, version tags)
+          ignore-versions: '^(latest|main|develop|v?\d+\.\d+\.\d+)$'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Summary
+        run: |
+          echo "✅ Cleaned up Docker images:"
+          echo "  - Removed untagged images (kept last 10)"
+          echo "  - Removed old feature branches (kept last 5)"
+          echo "  - Kept: latest, main, develop, version tags"
