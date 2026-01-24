@@ -2,12 +2,12 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ '**' ]  # Any branches
+    branches: [ '**' ]
     tags:
-      - 'v*.*.*'  # Release tags (v1.0.0, v2.1.3, etc)
+      - 'v*.*.*'
   pull_request:
     branches: [ main, develop ]
-  workflow_dispatch:  # Manual deploy from UI
+  workflow_dispatch:
     inputs:
       environment:
         description: 'Deploy to environment'
@@ -29,10 +29,10 @@ env:
 
 jobs:
   # ============================================
-  # Job 1: Testing and build
+  # Job 1: Build and Test
   # ============================================
   build:
-    name: Build anf Run Tests
+    name: Build and Run Tests
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.get_version.outputs.VERSION }}
@@ -52,7 +52,6 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # Run tests
       - name: Run tests
         run: ./gradlew test --no-daemon
 
@@ -65,17 +64,13 @@ jobs:
           reporter: java-junit
           fail-on-error: false
 
-      # Build jar
-      - name: Build Jar
+      - name: Build JAR
         run: ./gradlew bootJar --no-daemon
 
-      # Get version
       - name: Get version
         id: get_version
         run: |
           VERSION=$(./gradlew properties --no-daemon --console=plain -q | grep "^version:" | awk '{print $2}')
-
-          # Check if we got the version
           if [ -z "$VERSION" ]; then
             echo "Error: Could not extract version"
             exit 1
@@ -86,20 +81,16 @@ jobs:
       - name: Extract branch name
         id: extract_branch
         run: |
-          # Define branch or tag
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            # It is tag
             BRANCH_TAG=${GITHUB_REF#refs/tags/}
           else
-            # It is branch
             BRANCH=${GITHUB_REF#refs/heads/}
-            # transform feature/auth -> feature-auth
             BRANCH_TAG=$(echo $BRANCH | sed 's/\//-/g')
           fi
           echo "BRANCH_TAG=$BRANCH_TAG" >> $GITHUB_OUTPUT
           echo "Branch/Tag: $BRANCH_TAG"
 
-      - name: Upload JAR artifact (optional)
+      - name: Upload JAR artifact
         if: github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
@@ -107,23 +98,11 @@ jobs:
           path: build/libs/*.jar
           retention-days: 30
 
-      # Load JAR in GitHub Release (only on release creation)
-      - name: Upload JAR to Release
-        if: github.event_name == 'release'
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/libs/everage-${{ steps.get_version.outputs.VERSION }}.jar
-          asset_name: everage-${{ steps.get_version.outputs.VERSION }}.jar
-          asset_content_type: application/java-archive
-
-    # ============================================
-    # NEW: Publish to GitHub Packages
-    # ============================================
+  # ============================================
+  # Job 2: Publish to GitHub Packages
+  # ============================================
   publish-packages:
-    name: 📦 Publish to GitHub Packages
+    name: 📦 Publish Maven to GitHub Packages
     needs: build
     runs-on: ubuntu-latest
     if: |
@@ -150,22 +129,26 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Published successfully
         run: |
           echo "✅ Published to GitHub Packages!"
-          echo "Package: https://github.com/${{ github.repository }}/packages"
-          echo "Version: ${{ needs.build.outputs.version }}"
+          echo "📦 Package: https://github.com/${{ github.repository }}/packages"
+          echo "📌 Version: ${{ needs.build.outputs.version }}"
 
   # ============================================
-  # Job 2: Docker image with built jar
+  # Job 3: Build and Push Docker Image
   # ============================================
   docker:
-    name: Build and Push Docker Image
+    name: 🐳 Build and Push Docker Image
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    if: |
+      github.event_name == 'push' && (
+        github.ref == 'refs/heads/main' || 
+        github.ref == 'refs/heads/develop' ||
+        startsWith(github.ref, 'refs/tags/v')
+      )
     permissions:
       contents: read
       packages: write
@@ -174,24 +157,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Download built jar from prev. job
       - name: Download JAR artifact
+        if: github.ref == 'refs/heads/main'
         uses: actions/download-artifact@v4
         with:
           name: everage-${{ needs.build.outputs.VERSION }}
           path: .
 
-      # Rename JAR for Dockerfile
+      - name: Build JAR for non-main branches
+        if: github.ref != 'refs/heads/main'
+        run: |
+          chmod +x gradlew
+          ./gradlew bootJar --no-daemon
+
       - name: Prepare JAR for Docker
         run: |
-          # Find JAR file
-          JAR_FILE=$(ls *.jar | head -n 1)
+          JAR_FILE=$(ls *.jar 2>/dev/null || ls build/libs/*.jar | head -n 1)
           echo "Found JAR: $JAR_FILE"
-            
-          # Rename for Dockerfile
           mv "$JAR_FILE" everage.jar
-            
-          echo "Prepared JAR:"
           ls -lh everage.jar
 
       - name: Log in to GitHub Container Registry
@@ -207,26 +190,16 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Latest tag for main
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            
-            # Develop tag for develop
             type=raw,value=develop,enable=${{ github.ref == 'refs/heads/develop' }}
-            
-            # Release tag (v1.0.0)
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            
-            # Branch name for other branches
             type=ref,event=branch
-            
-            # SHA for all push
             type=sha,prefix={{branch}}-
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build Docker image with JAR
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -239,14 +212,15 @@ jobs:
 
       - name: Image Info
         run: |
-          echo "📦 Built and pushed images:"
+          echo "✅ Docker image built and pushed!"
+          echo "📦 Images:"
           echo "${{ steps.meta.outputs.tags }}"
 
   # ============================================
-  # Job 3: Deploy to Development (auto for main)
+  # Job 4: Deploy to DEV (auto for main)
   # ============================================
-  deploy:
-    name: Deploy to Dev (Auto)
+  deploy-dev:
+    name: 🚀 Deploy to DEV
     needs: [build, docker]
     runs-on: ubuntu-latest
     if: |
@@ -256,10 +230,9 @@ jobs:
       name: development
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Deploy to Dev Server
+      - name: Deploy to DEV Server
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEV_SERVER_HOST }}
@@ -268,59 +241,61 @@ jobs:
           passphrase: ${{ secrets.DEV_SSH_PASSPHRASE }}
           script: |
             set -e
-            
             cd /opt/everage
             
-            echo "📦 Deploying main branch to Development..."
-            
-            # Update IMAGE_TAG
+            echo "📦 Starting deployment..."
             sed -i 's/IMAGE_TAG=.*/IMAGE_TAG=main/' .env
             
-            # Show changes
-            echo "Updated .env:"
-            grep IMAGE_TAG .env
+            echo "🔐 Logging in to registry..."
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Login in GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Pull and restart
+            echo "🐳 Pulling latest image..."
             docker compose pull app
+            
+            echo "🚀 Starting application..."
             docker compose up -d app
             
-            # Wait deploy
-            echo "Waiting for app to start..."
+            echo "⏳ Waiting for app to start..."
             sleep 15
-
-            # Check health
-            if curl -f https://${{ secrets.DEV_SERVER_IP }}/actuator/health 2>/dev/null; then
+            
+            if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
               echo "✅ Application is healthy!"
             else
               echo "⚠️ Health check failed, checking logs..."
               docker compose logs --tail=50 app
             fi
             
+            echo "📊 Service status:"
             docker compose ps
-            echo "✅ Deployment to Dev completed!"
+            echo "✅ Deployment completed!"
 
-      - name: Comment on Commit
+      - name: Deployment Summary
         if: success()
         uses: peter-evans/commit-comment@v3
         with:
           body: |
             🚀 **Deployed to Development**
-
+            
             - Environment: `development`
             - Branch: `main`
-            - Image: `${{ needs.build.outputs.branch_tag }}`
-            - URL: http://${{ secrets.DEV_SERVER_IP }}:8080
-
+            - Image: `ghcr.io/${{ github.repository }}:main`
+            - Version: `${{ needs.build.outputs.version }}`
+            - Commit: `${{ github.sha }}`
+            
             ✅ Deployment successful!
+            
+            <details>
+            <summary>📋 Build Details</summary>
+            
+            **Workflow Run:** [${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            </details>
 
   # ============================================
-  # Job 4: Manual Deploy to Dev (for feature branches)
+  # Job 5: Manual Deploy to DEV
   # ============================================
   deploy-dev-manual:
-    name: 🎯 Deploy to Dev (Manual)
+    name: 🎯 Deploy to DEV (Manual)
     needs: [build, docker]
     runs-on: ubuntu-latest
     if: |
@@ -334,7 +309,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch || github.ref }}
 
-      - name: Deploy to Dev Server
+      - name: Deploy to DEV Server
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.DEV_SERVER_HOST }}
@@ -343,22 +318,15 @@ jobs:
           passphrase: ${{ secrets.DEV_SSH_PASSPHRASE }}
           script: |
             set -e
-            
             cd /opt/everage
             
             BRANCH_TAG="${{ needs.build.outputs.branch_tag }}"
-            echo "📦 Deploying $BRANCH_TAG to Development..."
+            echo "📦 Deploying $BRANCH_TAG..."
             
-            # Update IMAGE_TAG
             sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${BRANCH_TAG}/" .env
             
-            echo "Updated .env:"
-            grep IMAGE_TAG .env
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            # Login in GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Deploy
             docker compose pull app
             docker compose up -d app
             
@@ -372,18 +340,18 @@ jobs:
             fi
             
             docker compose ps
-            echo "✅ Manual deployment completed!"
+            echo "✅ Deployment completed!"
+
   # ============================================
-  # Job 5: Deploy to Production (только для тегов)
+  # Job 6: Deploy to PROD (auto for tags)
   # ============================================
   deploy-prod-auto:
-    name: 🏭 Deploy to Production (Auto)
+    name: 🏭 Deploy to PROD (Auto)
     needs: [build, docker]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'push' && 
-      startsWith(github.ref, 'refs/tags/v') &&
-      false
+      startsWith(github.ref, 'refs/tags/v')
     environment:
       name: production
 
@@ -397,7 +365,19 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Deploying version: $VERSION"
 
-      - name: Deploy to Production Server
+      - name: Check PROD server
+        id: check_prod
+        run: |
+          if [ -z "${{ secrets.PROD_SERVER_HOST }}" ]; then
+            echo "⚠️  PROD server not configured yet"
+            echo "READY=false" >> $GITHUB_OUTPUT
+          else
+            echo "✅ PROD server configured"
+            echo "READY=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Deploy to PROD Server
+        if: steps.check_prod.outputs.READY == 'true'
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.PROD_SERVER_HOST }}
@@ -405,73 +385,90 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           script: |
             set -e
-            
             cd /opt/everage-prod
             
-            echo "🏭 Deploying v${{ steps.get_version.outputs.VERSION }} to Production..."
+            echo "🏭 Deploying v${{ steps.get_version.outputs.VERSION }}..."
             
-            # Update IMAGE_TAG to release version
-            sed -i 's/IMAGE_TAG=.*/IMAGE_TAG=${{ steps.get_version.outputs.VERSION }}/' .env
-            
-            echo "Updated .env:"
-            grep IMAGE_TAG .env
-            
-            # # Login in GitHub Container Registry
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-            
-            # Create DB backup before deploy
             echo "📦 Creating database backup..."
-            docker exec postgres-prod pg_dump -U postgres everage_prod > backup_$(date +%Y%m%d_%H%M%S).sql
+            docker exec postgres-prod pg_dump -U postgres everage_prod > \
+              backup_$(date +%Y%m%d_%H%M%S).sql
             
-            # Deploy
+            sed -i 's/IMAGE_TAG=.*/IMAGE_TAG=v${{ steps.get_version.outputs.VERSION }}/' .env
+            
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
             docker compose pull app
             docker compose up -d app
             
-            # Check
-            echo "Waiting for app to start..."
+            echo "⏳ Waiting for app to start..."
             sleep 20
             
-            if curl -f https://localhost:8080/actuator/health 2>/dev/null; then
+            if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
               echo "✅ Production deployment successful!"
             else
               echo "❌ Health check failed! Rolling back..."
               docker compose down app
-              # Here possible to add rollback logic
               exit 1
             fi
             
             docker compose ps
             echo "✅ Production is live!"
 
+      - name: PROD not ready notification
+        if: steps.check_prod.outputs.READY == 'false'
+        run: |
+          echo "⚠️  Production deployment skipped"
+          echo "PROD_SERVER_HOST secret not configured"
+          echo ""
+          echo "✅ Tag v${{ steps.get_version.outputs.VERSION }} created successfully"
+          echo "📦 Docker image: ghcr.io/${{ github.repository }}:v${{ steps.get_version.outputs.VERSION }}"
+          echo ""
+          echo "To enable production deployment:"
+          echo "1. Set up production server"
+          echo "2. Add PROD_SERVER_HOST secret"
+          echo "3. Add PROD_SERVER_USERNAME secret"
+          echo "4. Add PROD_SSH_PRIVATE_KEY secret"
+
       - name: Create GitHub Release
-        if: success()
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        if: steps.check_prod.outputs.READY == 'true' && success()
+        uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ steps.get_version.outputs.VERSION }}
+          name: Release v${{ steps.get_version.outputs.VERSION }}
           body: |
             🎉 **Production Release v${{ steps.get_version.outputs.VERSION }}**
             
-            Deployed to production environment.
+            ✅ Successfully deployed to production environment
             
-            **Changes:**
-            See commit history for details.
+            ### 📦 Artifacts
+            
+            **Docker Image:**
+            ```
+            docker pull ghcr.io/${{ github.repository }}:v${{ steps.get_version.outputs.VERSION }}
+            ```
+          
+            **Maven Dependency:**
+            ```xml
+            <dependency>
+            <groupId>com.everage.eshop</groupId>
+            <artifactId>everage-service</artifactId>
+            <version>${{ steps.get_version.outputs.VERSION }}</version>
+            </dependency>
+            ```
           draft: false
           prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ============================================
-  # Job 6: Manual Deploy to Production
+  # Job 7: Manual Deploy to PROD
   # ============================================
   deploy-prod-manual:
-    name: 🏭 Deploy to Production (Manual)
+    name: 🏭 Deploy to PROD (Manual)
     needs: [build, docker]
     runs-on: ubuntu-latest
     if: |
       github.event_name == 'workflow_dispatch' && 
-      github.event.inputs.environment == 'prod' &&
-      false
+      github.event.inputs.environment == 'prod'
     environment:
       name: production
 
@@ -482,11 +479,14 @@ jobs:
 
       - name: Confirm Production Deployment
         run: |
-          echo "⚠️  DEPLOYING TO PRODUCTION"
+          echo "⚠️  ⚠️  ⚠️  DEPLOYING TO PRODUCTION ⚠️  ⚠️  ⚠️"
+          echo ""
           echo "Branch/Tag: ${{ needs.build.outputs.branch_tag }}"
-          echo "This is a manual production deployment."
+          echo "Version: ${{ needs.build.outputs.version }}"
+          echo ""
+          echo "This is a MANUAL production deployment."
 
-      - name: Deploy to Production Server
+      - name: Deploy to PROD Server
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.PROD_SERVER_HOST }}
@@ -494,21 +494,19 @@ jobs:
           key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
           script: |
             set -e
-            
             cd /opt/everage-prod
             
             BRANCH_TAG="${{ needs.build.outputs.branch_tag }}"
             echo "🏭 Manual deployment of $BRANCH_TAG to Production..."
             
-            # Backup
             echo "📦 Creating database backup..."
-            docker exec postgres-prod pg_dump -U postgres everage_prod > backup_manual_$(date +%Y%m%d_%H%M%S).sql
+            docker exec postgres-prod pg_dump -U postgres everage_prod > \
+              backup_manual_$(date +%Y%m%d_%H%M%S).sql
             
-            # Update
             sed -i "s/IMAGE_TAG=.*/IMAGE_TAG=${BRANCH_TAG}/" .env
             
-            # Deploy
-            echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            
             docker compose pull app
             docker compose up -d app
             
@@ -521,3 +519,6 @@ jobs:
               docker compose logs --tail=100 app
               exit 1
             fi
+            
+            docker compose ps
+            echo "✅ Production deployment completed!"
