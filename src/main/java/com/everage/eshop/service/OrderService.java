@@ -3,13 +3,22 @@ package com.everage.eshop.service;
 import com.everage.eshop.dto.CheckoutRequest;
 import com.everage.eshop.dto.OrderDTO;
 import com.everage.eshop.dto.OrderItemRequest;
+import com.everage.eshop.dto.PaymentRequest;
+import com.everage.eshop.dto.PaymentResponse;
+import com.everage.eshop.dto.ShippingRequest;
+import com.everage.eshop.dto.ShippingResponse;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderItem;
 import com.everage.eshop.entity.ItemStatus;
+import com.everage.eshop.entity.OrderStatus;
+import com.everage.eshop.entity.PaymentMethod;
+import com.everage.eshop.entity.PaymentStatus;
+import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.exception.InsufficientStockException;
 import com.everage.eshop.exception.ItemNotFoundException;
 import com.everage.eshop.dto.mapper.OrderMapper;
+import com.everage.eshop.exception.OrderNotFoundException;
 import com.everage.eshop.repository.ItemRepository;
 import com.everage.eshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +36,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final ItemRepository itemRepository;
     private final ItemService itemService;
+    private final PaymentService paymentService;
+    private final ShippingService shippingService;
     private final OrderMapper orderMapper;
 
     @Transactional
@@ -65,6 +76,7 @@ public class OrderService {
         order.setPostalCode(request.postalCode());
         order.setCountry(request.country());
         order.setCustomerNotes(request.customerNotes());
+        order.setStatus(OrderStatus.PENDING);
 
         // Add Order Items
         for (OrderItemRequest itemRequest : request.items()) {
@@ -87,12 +99,53 @@ public class OrderService {
         // Calculate totals
         order.calculateTotals();
 
-
         // Save Order
         order = orderRepository.persist(order);
 
         log.info("Order created successfully: {}, Total: {}",
                 order.getOrderNumber(), order.getTotalAmount());
+
+        return orderMapper.toDto(order);
+    }
+
+    @Transactional
+    public OrderDTO completeCheckout(CheckoutRequest checkoutRequest, PaymentMethod paymentMethod,
+                                     String paymentToken, ShippingProvider shippingProvider) {
+        log.info("Starting complete checkout for email: {}", checkoutRequest.email());
+
+        // Step 1: Create Order
+        OrderDTO orderDTO = createOrder(checkoutRequest);
+        log.info("Step 1 - Order created: {}", orderDTO.orderNumber());
+
+        Order order = orderRepository.findById(orderDTO.id())
+                .orElseThrow(() -> new OrderNotFoundException("Order not found after creation"));
+
+        // Step 2: Process Payment
+        PaymentRequest paymentRequest = new PaymentRequest(order.getUuid(), paymentMethod, paymentToken);
+        PaymentResponse paymentResponse = paymentService.processPayment(paymentRequest);
+        log.info("Step 2 - Payment processed: {}", paymentResponse.status());
+
+        if (paymentResponse.status() != PaymentStatus.COMPLETED) {
+            // Payment failed - order remains PENDING
+            log.error("Payment failed for order: {}", order.getOrderNumber());
+            throw new RuntimeException("Payment processing failed: " + paymentResponse.status());
+        }
+
+        // Step 3: Update Order Status to CONFIRMED
+        order.setStatus(OrderStatus.CONFIRMED);
+        order = orderRepository.persist(order);
+        log.info("Step 3 - Order status updated to CONFIRMED");
+
+        // Step 4: Create Shipping
+        ShippingRequest shippingRequest = new ShippingRequest(
+                order.getUuid(),
+                shippingProvider,
+                order.getAddress() + ", " + order.getCity() + ", " + order.getPostalCode() + ", " + order.getCountry()
+        );
+        ShippingResponse shippingResponse = shippingService.createShipping(shippingRequest);
+        log.info("Step 4 - Shipping created: {}", shippingResponse.trackingNumber());
+
+        log.info("Complete checkout successful for order: {}", order.getOrderNumber());
 
         return orderMapper.toDto(order);
     }
