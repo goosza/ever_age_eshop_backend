@@ -155,8 +155,9 @@ services:
       - portainer-data:/data
     networks:
       - everage-network
+    environment:
+      - PORTAINER_PASSWORD=${PORTAINER_PASSWORD}
     restart: unless-stopped
-    command: --admin-password='${PORTAINER_PASSWORD}'
 
 # ============================================
 # Networks
