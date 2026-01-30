@@ -1,20 +1,180 @@
-version: '3.8'
-
 services:
+  # ============================================
+  # Spring Boot Application
+  # ============================================
   app:
-    image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG:-latest}
+    image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+    container_name: everage-service-dev
+    ports:
+      - "8080:8080"
     environment:
-      - SPRING_PROFILES_ACTIVE=prod
-      - DATABASE_URL=${DATABASE_URL}
-      - DATABASE_USERNAME=${DATABASE_USERNAME}
+      # Spring Profile
+      - SPRING_PROFILES_ACTIVE=dev
+
+      # Database
+      - DATABASE_URL=jdbc:postgresql://postgres:5432/everage_dev
+      - DATABASE_USERNAME=postgres
       - DATABASE_PASSWORD=${DATABASE_PASSWORD}
-      - SERVER_URL=${SERVER_URL}
-    deploy:
-      replicas: 2
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
-        reservations:
-          cpus: '0.5'
-          memory: 256M
+
+      # Server
+      - SERVER_URL=http://${SERVER_IP}:8080
+      - SERVER_PORT=8080
+
+      # JVM Options
+      - JAVA_OPTS=-Xmx512m -Xms256m
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - everage-network
+    labels:
+      logging: "promtail"
+      application: "everage-dev"
+      environment: "development"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres-dev
+    environment:
+      - POSTGRES_DB=everage_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DATABASE_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF8 --locale=en_US.UTF-8
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - everage-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d everage_dev" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  # ============================================
+  # Loki - Log Aggregation
+  # ============================================
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: loki-dev
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+           - everage-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3100/ready"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ============================================
+  # Promtail - Log Collector
+  # ============================================
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail-dev
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - everage-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # ============================================
+  # Grafana - Monitoring Dashboard
+  # ============================================
+  grafana:
+    image: grafana/grafana:10.2.3
+    container_name: grafana-dev
+    ports:
+      - "3000:3000"
+    environment:
+      # Admin credentials
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      
+      # Security
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_USERS_ALLOW_ORG_CREATE=false
+
+      # Server
+      - GF_SERVER_ROOT_URL=http://${SERVER_IP}:3000
+      - GF_SERVER_DOMAIN=${SERVER_IP}
+
+      # Anonymous access (optional - для демо)
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+    networks:
+      - everage-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# ============================================
+  # Portainer - Docker Management UI
+  # ============================================
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer-dev
+    ports:
+      - "9443:9443"
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    networks:
+      - everage-network
+    restart: unless-stopped
+    command: --admin-password='${PORTAINER_PASSWORD}'
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  everage-network:
+    driver: bridge
+    name: everage-net
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres-data:
+    name: everage-postgres-data
+  loki-data:
+    name: everage-loki-data
+  grafana-data:
+    name: everage-grafana-data
+  portainer-data:
+    name: everage-portainer-data
