@@ -281,7 +281,7 @@ jobs:
             
             - Environment: `development`
             - Branch: `main`
-            - Image: `ghcr.io/${{ github.repository }}:main`
+            - Image: `${{env.REGISTRY}}/${{ github.repository }}:main`
             - Version: `${{ needs.build.outputs.version }}`
             - Commit: `${{ github.sha }}`
             
