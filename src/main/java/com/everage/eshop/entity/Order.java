@@ -59,7 +59,7 @@ public class Order {
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 30)
     private OrderStatus status = OrderStatus.PENDING;
 
     // Notes

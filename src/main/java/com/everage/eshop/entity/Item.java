@@ -35,7 +35,7 @@ public class Item {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private ItemStatus status = ItemStatus.ACTIVE;
     @Column(nullable = false)
     private Integer quantity;

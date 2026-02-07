@@ -34,10 +34,10 @@ public class OrderStatusHistory {
     )
     private Order order;
     @Enumerated(EnumType.STRING)
-    @Column(name = "old_status", length = 50)
+    @Column(name = "old_status", length = 30)
     private OrderStatus oldStatus;
     @Enumerated(EnumType.STRING)
-    @Column(name = "new_status", nullable = false, length = 50)
+    @Column(name = "new_status", nullable = false, length = 30)
     private OrderStatus newStatus;
     @Column(name = "changed_by", length = 100)
     private String changedBy = "SYSTEM";

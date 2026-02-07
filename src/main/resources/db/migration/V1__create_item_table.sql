@@ -3,13 +3,13 @@
 -- Items table
 CREATE TABLE items (
     uuid uuid NOT NULL,
-    description character varying(255),
+    description varchar(1000),
     image_urls jsonb NOT NULL,
-    name character varying(255) NOT NULL,
+    name varchar(255) NOT NULL,
     price numeric(10,2) NOT NULL,
     quantity integer NOT NULL,
-    status character varying(255) NOT NULL,
-    CONSTRAINT items_status_check CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::character varying, 'INACTIVE'::character varying, 'OUT_OF_STOCK'::character varying])::text[])))
+    status varchar(30) NOT NULL,
+    CONSTRAINT items_status_check CHECK (((status)::text = ANY ((ARRAY['ACTIVE'::varchar, 'INACTIVE'::varchar, 'OUT_OF_STOCK'::varchar])::text[])))
 );
 
 ALTER TABLE ONLY items ADD CONSTRAINT items_pkey PRIMARY KEY (uuid);
@@ -19,20 +19,20 @@ ALTER TABLE ONLY items ADD CONSTRAINT items_pkey PRIMARY KEY (uuid);
 CREATE TABLE orders (
     uuid uuid NOT NULL,
     address text NOT NULL,
-    city character varying(50) NOT NULL,
-    country character varying(50) NOT NULL,
+    city varchar(50) NOT NULL,
+    country varchar(50) NOT NULL,
     created_at timestamp(6) without time zone NOT NULL,
     customer_notes text,
-    email character varying(255) NOT NULL,
-    first_name character varying(100) NOT NULL,
-    last_name character varying(100) NOT NULL,
-    order_number character varying(50) NOT NULL,
-    phone character varying(20),
-    postal_code character varying(20) NOT NULL,
-    status character varying(50) NOT NULL,
+    email varchar(255) NOT NULL,
+    first_name varchar(100) NOT NULL,
+    last_name varchar(100) NOT NULL,
+    order_number varchar(50) NOT NULL,
+    phone varchar(20),
+    postal_code varchar(20) NOT NULL,
+    status varchar(30) NOT NULL,
     total_amount numeric(10,2) NOT NULL,
     updated_at timestamp(6) without time zone NOT NULL,
-    CONSTRAINT orders_status_check CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'CONFIRMED'::character varying, 'PROCESSING'::character varying, 'SHIPPED'::character varying, 'DELIVERED'::character varying, 'CANCELLED'::character varying, 'REFUNDED'::character varying])::text[])))
+    CONSTRAINT orders_status_check CHECK (((status)::text = ANY ((ARRAY['PENDING'::varchar, 'CONFIRMED'::varchar, 'PROCESSING'::varchar, 'SHIPPED'::varchar, 'DELIVERED'::varchar, 'CANCELLED'::varchar, 'REFUNDED'::varchar])::text[])))
 );
 
 ALTER TABLE ONLY orders ADD CONSTRAINT orders_pkey PRIMARY KEY (uuid);
@@ -61,14 +61,14 @@ ALTER TABLE ONLY order_items
 -- Order status history table
 CREATE TABLE order_status_history (
     uuid uuid NOT NULL,
-    changed_by character varying(100),
+    changed_by varchar(100),
     created_at timestamp(6) without time zone NOT NULL,
-    new_status character varying(50) NOT NULL,
+    new_status varchar(30) NOT NULL,
     notes text,
-    old_status character varying(50),
+    old_status varchar(30),
     order_uuid uuid NOT NULL,
-    CONSTRAINT order_status_history_new_status_check CHECK (((new_status)::text = ANY ((ARRAY['PENDING'::character varying, 'CONFIRMED'::character varying, 'PROCESSING'::character varying, 'SHIPPED'::character varying, 'DELIVERED'::character varying, 'CANCELLED'::character varying, 'REFUNDED'::character varying])::text[]))),
-    CONSTRAINT order_status_history_old_status_check CHECK (((old_status)::text = ANY ((ARRAY['PENDING'::character varying, 'CONFIRMED'::character varying, 'PROCESSING'::character varying, 'SHIPPED'::character varying, 'DELIVERED'::character varying, 'CANCELLED'::character varying, 'REFUNDED'::character varying])::text[])))
+    CONSTRAINT order_status_history_new_status_check CHECK (((new_status)::text = ANY ((ARRAY['PENDING'::varchar, 'CONFIRMED'::varchar, 'PROCESSING'::varchar, 'SHIPPED'::varchar, 'DELIVERED'::varchar, 'CANCELLED'::varchar, 'REFUNDED'::varchar])::text[]))),
+    CONSTRAINT order_status_history_old_status_check CHECK (((old_status)::text = ANY ((ARRAY['PENDING'::varchar, 'CONFIRMED'::varchar, 'PROCESSING'::varchar, 'SHIPPED'::varchar, 'DELIVERED'::varchar, 'CANCELLED'::varchar, 'REFUNDED'::varchar])::text[])))
 );
 
 ALTER TABLE ONLY order_status_history ADD CONSTRAINT order_status_history_pkey PRIMARY KEY (uuid);
