@@ -12,6 +12,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -22,14 +23,16 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "order")
+@Table(name = "orders", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_order_number", columnNames = "order_number")
+})
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
     private UUID uuid;
 
-    @Column(name = "order_number", unique = true, nullable = false, length = 50)
+    @Column(name = "order_number", nullable = false, length = 50)
     private String orderNumber;
 
     // Customer Information
@@ -45,11 +48,11 @@ public class Order {
     // Delivery Address
     @Column(nullable = false, columnDefinition = "TEXT")
     private String address;
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 50)
     private String city;
     @Column(name = "postal_code", nullable = false, length = 20)
     private String postalCode;
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 50)
     private String country;
 
     // Order Details

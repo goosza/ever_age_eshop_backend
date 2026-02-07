@@ -2,7 +2,7 @@ services:
   # ============================================
   # Spring Boot Application
   # ============================================
-  app:
+  everage-service:
     image: ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
     container_name: everage-service-dev
     ports:
@@ -115,7 +115,7 @@ services:
       # Admin credentials
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
-      
+
       # Security
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_USERS_ALLOW_ORG_CREATE=false

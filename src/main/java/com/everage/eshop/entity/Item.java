@@ -20,7 +20,7 @@ import java.math.BigDecimal;
 
 @Data
 @Entity
-@Table(name = "item")
+@Table(name = "items")
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

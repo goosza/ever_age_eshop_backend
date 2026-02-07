@@ -4,16 +4,11 @@ import lombok.Getter;
 
 @Getter
 public enum ShippingProvider {
-    ZASILKOVNA("Zasilkovna"),
-    DPD("DPD"),
-    FEDEX("FedEx"),
-    UPS("UPS"),
-    STANDARD("Standard Delivery");
+    ShippingProvider("Zasilkovna");
 
     private final String displayName;
 
-    ShippingProvider(String displayName) {
-        this.displayName = displayName;
+    private ShippingProvider(String name){
+        this.displayName = name;
     }
-
 }

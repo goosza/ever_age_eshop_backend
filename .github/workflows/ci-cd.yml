@@ -253,19 +253,19 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "🐳 Pulling latest image..."
-            docker compose pull app
+            docker compose pull everage-service
             
             echo "🚀 Starting application..."
-            docker compose up -d app
+            docker compose up -d everage-service
             
-            echo "⏳ Waiting for app to start..."
+            echo "⏳ Waiting for everage-service to start..."
             sleep 15
             
             if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
               echo "✅ Application is healthy!"
             else
               echo "⚠️ Health check failed, checking logs..."
-              docker compose logs --tail=50 app
+              docker compose logs --tail=50 everage-service
             fi
             
             echo "📊 Service status:"
@@ -281,7 +281,7 @@ jobs:
             
             - Environment: `development`
             - Branch: `main`
-            - Image: `ghcr.io/${{ github.repository }}:main`
+            - Image: `${{env.REGISTRY}}/${{ github.repository }}:main`
             - Version: `${{ needs.build.outputs.version }}`
             - Commit: `${{ github.sha }}`
             
@@ -328,19 +328,19 @@ jobs:
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
             echo "🐳 Pulling image: ${BRANCH_TAG}"
-            docker compose pull app
+            docker compose pull everage-service
             
             echo "🚀 Starting application..."
-            docker compose up -d app
+            docker compose up -d everage-service
             
-            echo "⏳ Waiting for app to start..."
+            echo "⏳ Waiting for everage-service to start..."
             sleep 15
             
             if curl -f http://localhost:8080/actuator/health 2>/dev/null; then
               echo "✅ Application is healthy!"
             else
               echo "⚠️ Health check failed"
-              docker compose logs --tail=50 app
+              docker compose logs --tail=50 everage-service
             fi
             
             docker compose ps
@@ -399,8 +399,8 @@ jobs:
             
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            docker compose pull app
-            docker compose up -d app
+            docker compose pull everage-service
+            docker compose up -d everage-service
             
             echo "⏳ Waiting for app to start..."
             sleep 20
@@ -409,7 +409,7 @@ jobs:
               echo "✅ Production deployment successful!"
             else
               echo "❌ Health check failed! Rolling back..."
-              docker compose down app
+              docker compose down everage-service
               exit 1
             fi
             
@@ -499,8 +499,8 @@ jobs:
             
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
             
-            docker compose pull app
-            docker compose up -d app
+            docker compose pull everage-service
+            docker compose up -d everage-service
             
             sleep 20
             
@@ -508,7 +508,7 @@ jobs:
               echo "✅ Manual production deployment successful!"
             else
               echo "❌ Deployment failed!"
-              docker compose logs --tail=100 app
+              docker compose logs --tail=100 everage-service
               exit 1
             fi
             

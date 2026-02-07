@@ -1,4 +1,4 @@
-# Многоэтапная сборка для оптимизации размера образа
+# Multistage build for image size optimizing
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 

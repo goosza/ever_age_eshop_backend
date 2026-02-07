@@ -12,6 +12,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -24,9 +25,13 @@ public class OrderStatusHistory {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
-    private UUID id;
+    private UUID uuid;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(
+            name = "order_uuid",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_status_history_order")
+    )
     private Order order;
     @Enumerated(EnumType.STRING)
     @Column(name = "old_status", length = 50)
