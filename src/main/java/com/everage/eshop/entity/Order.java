@@ -22,7 +22,7 @@ import java.util.UUID;
 
 @Data
 @Entity
-@Table(name = "order")
+@Table(name = "orders")
 public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
@@ -45,11 +45,11 @@ public class Order {
     // Delivery Address
     @Column(nullable = false, columnDefinition = "TEXT")
     private String address;
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 50)
     private String city;
     @Column(name = "postal_code", nullable = false, length = 20)
     private String postalCode;
-    @Column(nullable = false, length = 100)
+    @Column(nullable = false, length = 50)
     private String country;
 
     // Order Details
