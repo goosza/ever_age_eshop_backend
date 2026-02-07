@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
+import jakarta.persistence.ForeignKey;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -27,11 +28,19 @@ public class OrderItem {
     private UUID uuid;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
+    @JoinColumn(
+            name = "order_uuid",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_item_order")
+    )
     private Order order;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", nullable = false)
+    @JoinColumn(
+            name = "item_uuid",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_order_item_item")
+    )
     private Item item;
 
     @Column(nullable = false)
