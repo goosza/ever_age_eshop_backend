@@ -80,7 +80,7 @@ public class ShippingService {
 
         shipping = shippingRepository.persist(shipping);
 
-        log.info("Shipping created: {}", shipping.getId());
+        log.info("Shipping created: {}", shipping.getUuid());
 
         return shippingMapper.toDto(shipping);
     }
@@ -101,11 +101,11 @@ public class ShippingService {
     }
 
     @Transactional(readOnly = true)
-    public ShippingResponse getShippingByOrderId(UUID orderId) {
-        log.info("Fetching shipping for order: {}", orderId);
+    public ShippingResponse getShippingByOrderId(UUID orderUuid) {
+        log.info("Fetching shipping for order: {}", orderUuid);
 
-        Shipping shipping = shippingRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Shipping not found for order: " + orderId));
+        Shipping shipping = shippingRepository.findByOrderUuid(orderUuid)
+                .orElseThrow(() -> new RuntimeException("Shipping not found for order: " + orderUuid));
 
         return shippingMapper.toDto(shipping);
     }
@@ -113,10 +113,10 @@ public class ShippingService {
     private BigDecimal calculateShippingCost(ShippingProvider provider) {
         return switch (provider) {
             case ZASILKOVNA -> new BigDecimal("12.00");
-            case DPD -> new BigDecimal("15.00");
-            case FEDEX -> new BigDecimal("20.00");
-            case UPS -> new BigDecimal("18.00");
-            case STANDARD -> new BigDecimal("5.00");
+//            case DPD -> new BigDecimal("15.00");
+//            case FEDEX -> new BigDecimal("20.00");
+//            case UPS -> new BigDecimal("18.00");
+//            case STANDARD -> new BigDecimal("5.00");
         };
     }
 

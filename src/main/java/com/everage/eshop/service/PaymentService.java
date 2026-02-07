@@ -77,7 +77,7 @@ public class PaymentService {
 
         payment = paymentRepository.persist(payment);
 
-        log.info("Payment record saved: {}", payment.getId());
+        log.info("Payment record saved: {}", payment.getUuid());
 
         return paymentMapper.toDto(payment);
     }
@@ -112,11 +112,11 @@ public class PaymentService {
     }
 
     @Transactional(readOnly = true)
-    public PaymentResponse getPaymentByOrderId(UUID orderId) {
-        log.info("Fetching payment for order: {}", orderId);
+    public PaymentResponse getPaymentByOrderId(UUID orderUuid) {
+        log.info("Fetching payment for order: {}", orderUuid);
 
-        Payment payment = paymentRepository.findByOrderId(orderId)
-                .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderId));
+        Payment payment = paymentRepository.findByOrderUuid(orderUuid)
+                .orElseThrow(() -> new RuntimeException("Payment not found for order: " + orderUuid));
 
         return paymentMapper.toDto(payment);
     }

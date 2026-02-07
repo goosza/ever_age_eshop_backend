@@ -1,5 +1,8 @@
 package com.everage.eshop.exception;
 
+import com.everage.eshop.exception.item.InvalidItemStatusException;
+import com.everage.eshop.exception.item.ItemAlreadyExistsException;
+import com.everage.eshop.exception.item.ItemNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;

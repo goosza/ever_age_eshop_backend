@@ -13,6 +13,7 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
+import jakarta.persistence.ForeignKey;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -27,21 +28,26 @@ public class Payment {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
-    private UUID id;
+    private UUID uuid;
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
+    @JoinColumn(
+            name = "order_uuid",
+            nullable = false,
+            unique = true,
+            foreignKey = @ForeignKey(name = "fk_payment_order")
+    )
     private Order order;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private PaymentMethod method;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 30)
     private PaymentStatus status;
 
     @Column(nullable = false, length = 100)
