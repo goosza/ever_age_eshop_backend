@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum ShippingProvider {
-    ShippingProvider("Zasilkovna");
+    ZASILKOVNA("Zasilkovna");
 
     private final String displayName;
 

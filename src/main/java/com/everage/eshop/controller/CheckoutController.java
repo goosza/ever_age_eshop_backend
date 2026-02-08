@@ -1,18 +1,16 @@
 package com.everage.eshop.controller;
 
-import com.everage.eshop.dto.CheckoutRequest;
+import com.everage.eshop.dto.CompleteCheckoutRequest;
 import com.everage.eshop.dto.OrderDTO;
 import com.everage.eshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -25,24 +23,26 @@ public class CheckoutController {
 
     private final OrderService orderService;
 
-    @PostMapping
-    @Operation(summary = "Create order", description = "Creates a new order from checkout data")
-    public ResponseEntity<OrderDTO> createOrder(@RequestBody CheckoutRequest request) {
-        OrderDTO order = orderService.createOrder(request);
-        return ResponseEntity.ok(order);
+    @PostMapping("/complete")
+    @Operation(summary = "Complete checkout", description = "Create order, process payment, and create shipping in one call")
+    public OrderDTO completeCheckout(@RequestBody CompleteCheckoutRequest request) {
+        return orderService.completeCheckout(
+                request.checkoutRequest(),
+                request.paymentMethod(),
+                request.paymentToken(),
+                request.shippingProvider()
+        );
     }
 
-    @GetMapping("/orders/{orderNumber}")
+    @GetMapping("/order/{orderNumber}")
     @Operation(summary = "Get order by number")
-    public ResponseEntity<OrderDTO> getOrderByNumber(@PathVariable String orderNumber) {
-        OrderDTO order = orderService.getOrderByNumber(orderNumber);
-        return ResponseEntity.ok(order);
+    public OrderDTO getOrderByNumber(@PathVariable String orderNumber) {
+        return orderService.getOrderByNumber(orderNumber);
     }
 
-    @GetMapping("/orders/by-email")
+    @GetMapping("/email/{email}")
     @Operation(summary = "Get orders by email")
-    public ResponseEntity<List<OrderDTO>> getOrdersByEmail(@RequestParam String email) {
-        List<OrderDTO> orders = orderService.getOrdersByEmail(email);
-        return ResponseEntity.ok(orders);
+    public List<OrderDTO> getOrdersByEmail(@PathVariable String email) {
+        return orderService.getOrdersByEmail(email);
     }
 }

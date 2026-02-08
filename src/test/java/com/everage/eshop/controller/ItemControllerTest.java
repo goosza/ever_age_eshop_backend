@@ -1,9 +1,9 @@
 package com.everage.eshop.controller;
 
 import com.everage.eshop.dto.ItemDto;
-import com.everage.eshop.exception.ItemNotFoundException;
-import com.everage.eshop.exception.ItemAlreadyExistsException;
-import com.everage.eshop.exception.InvalidItemStatusException;
+import com.everage.eshop.exception.item.ItemNotFoundException;
+import com.everage.eshop.exception.item.ItemAlreadyExistsException;
+import com.everage.eshop.exception.item.InvalidItemStatusException;
 import com.everage.eshop.entity.ItemStatus;
 import com.everage.eshop.service.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
