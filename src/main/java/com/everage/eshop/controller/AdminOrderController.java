@@ -1,17 +1,8 @@
 package com.everage.eshop.controller;
 
-import com.everage.eshop.dto.OrderDTO;
-import com.everage.eshop.entity.OrderStatus;
-import com.everage.eshop.service.AdminOrderService;
-import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/admin/orders")

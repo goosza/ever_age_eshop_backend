@@ -1,7 +1,7 @@
 package com.everage.eshop.dto.mapper;
 
-import com.everage.eshop.dto.OrderDTO;
-import com.everage.eshop.dto.OrderItemDTO;
+import com.everage.eshop.dto.OrderDto;
+import com.everage.eshop.dto.OrderItemDto;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderItem;
 import org.mapstruct.Mapper;
@@ -18,12 +18,12 @@ import java.util.List;
 )
 public interface OrderMapper {
 
-    OrderDTO toDto(Order order);
+    OrderDto toDto(Order order);
 
-    List<OrderDTO> toDtoList(List<Order> orders);
+    List<OrderDto> toDtoList(List<Order> orders);
 
     @Mapping(target = "itemUuid", expression = "java(orderItem.getItem() != null ? orderItem.getItem().getUuid() : null)")
-    OrderItemDTO toItemDto(OrderItem orderItem);
+    OrderItemDto toItemDto(OrderItem orderItem);
 
-    List<OrderItemDTO> toItemDtoList(List<OrderItem> orderItems);
+    List<OrderItemDto> toItemDtoList(List<OrderItem> orderItems);
 }

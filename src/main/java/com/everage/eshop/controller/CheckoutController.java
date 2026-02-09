@@ -1,7 +1,7 @@
 package com.everage.eshop.controller;
 
 import com.everage.eshop.dto.CompleteCheckoutRequest;
-import com.everage.eshop.dto.OrderDTO;
+import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -25,7 +25,7 @@ public class CheckoutController {
 
     @PostMapping("/complete")
     @Operation(summary = "Complete checkout", description = "Create order, process payment, and create shipping in one call")
-    public OrderDTO completeCheckout(@RequestBody CompleteCheckoutRequest request) {
+    public OrderDto completeCheckout(@RequestBody CompleteCheckoutRequest request) {
         return orderService.completeCheckout(
                 request.checkoutRequest(),
                 request.paymentMethod(),
@@ -36,13 +36,13 @@ public class CheckoutController {
 
     @GetMapping("/order/{orderNumber}")
     @Operation(summary = "Get order by number")
-    public OrderDTO getOrderByNumber(@PathVariable String orderNumber) {
+    public OrderDto getOrderByNumber(@PathVariable String orderNumber) {
         return orderService.getOrderByNumber(orderNumber);
     }
 
     @GetMapping("/email/{email}")
     @Operation(summary = "Get orders by email")
-    public List<OrderDTO> getOrdersByEmail(@PathVariable String email) {
+    public List<OrderDto> getOrdersByEmail(@PathVariable String email) {
         return orderService.getOrdersByEmail(email);
     }
 }
