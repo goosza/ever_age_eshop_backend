@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public record OrderDTO(
+public record OrderDto(
         UUID id,
         String orderNumber,
 
@@ -24,7 +24,7 @@ public record OrderDTO(
         String country,
 
         // Order details
-        List<OrderItemDTO> items,
+        List<OrderItemDto> items,
         BigDecimal totalAmount,
         OrderStatus status,
 

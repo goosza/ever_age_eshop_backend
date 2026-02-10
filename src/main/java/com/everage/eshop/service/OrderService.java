@@ -1,7 +1,7 @@
 package com.everage.eshop.service;
 
 import com.everage.eshop.dto.CheckoutRequest;
-import com.everage.eshop.dto.OrderDTO;
+import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.dto.OrderItemRequest;
 import com.everage.eshop.dto.PaymentRequest;
 import com.everage.eshop.dto.PaymentResponse;
@@ -18,7 +18,7 @@ import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.exception.item.InsufficientStockException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.dto.mapper.OrderMapper;
-import com.everage.eshop.exception.OrderNotFoundException;
+import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.repository.ItemRepository;
 import com.everage.eshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +41,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
 
     @Transactional
-    public OrderDTO createOrder(CheckoutRequest request) {
+    public OrderDto createOrder(CheckoutRequest request) {
         log.info("Creating order for email: {}", request.email());
 
         // Validate all items exist and have stock
@@ -109,12 +109,12 @@ public class OrderService {
     }
 
     @Transactional
-    public OrderDTO completeCheckout(CheckoutRequest checkoutRequest, PaymentMethod paymentMethod,
+    public OrderDto completeCheckout(CheckoutRequest checkoutRequest, PaymentMethod paymentMethod,
                                      String paymentToken, ShippingProvider shippingProvider) {
         log.info("Starting complete checkout for email: {}", checkoutRequest.email());
 
         // Step 1: Create Order
-        OrderDTO orderDTO = createOrder(checkoutRequest);
+        OrderDto orderDTO = createOrder(checkoutRequest);
         log.info("Step 1 - Order created: {}", orderDTO.orderNumber());
 
         Order order = orderRepository.findById(orderDTO.id())
@@ -151,7 +151,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public OrderDTO getOrderByNumber(String orderNumber) {
+    public OrderDto getOrderByNumber(String orderNumber) {
         log.info("Fetching order by number: {}", orderNumber);
 
         Order order = orderRepository.findByOrderNumber(orderNumber)
@@ -161,9 +161,9 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public List<OrderDTO> getOrdersByEmail(String email) {
+    public List<OrderDto> getOrdersByEmail(String email) {
         log.info("Fetching orders for email: {}", email);
-        List<OrderDTO> orders = orderMapper.toDtoList(orderRepository.findByEmailOrderByCreatedAtDesc(email));
+        List<OrderDto> orders = orderMapper.toDtoList(orderRepository.findByEmailOrderByCreatedAtDesc(email));
         log.info("Found {} orders", orders.size());
         return orders;
     }

@@ -1,9 +1,9 @@
 package com.everage.eshop.service;
 
-import com.everage.eshop.dto.OrderDTO;
+import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderStatus;
-import com.everage.eshop.exception.OrderNotFoundException;
+import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.dto.mapper.OrderMapper;
 import com.everage.eshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,14 +23,14 @@ public class AdminOrderService {
 
 
     @Transactional(readOnly = true)
-    public OrderDTO getOrder(UUID orderId) {
+    public OrderDto getOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         return orderMapper.toDto(order);
     }
 
     @Transactional
-    public OrderDTO confirmOrder(UUID orderId) {
+    public OrderDto confirmOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
@@ -49,7 +49,7 @@ public class AdminOrderService {
     }
 
     @Transactional
-    public OrderDTO shipOrder(UUID orderId) {
+    public OrderDto shipOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
@@ -67,7 +67,7 @@ public class AdminOrderService {
     }
 
     @Transactional
-    public OrderDTO deliverOrder(UUID orderId) {
+    public OrderDto deliverOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
@@ -86,7 +86,7 @@ public class AdminOrderService {
     }
 
     @Transactional
-    public OrderDTO cancelOrder(UUID orderId) {
+    public OrderDto cancelOrder(UUID orderId) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 

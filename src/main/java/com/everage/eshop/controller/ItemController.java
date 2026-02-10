@@ -9,15 +9,18 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,35 +31,34 @@ import java.util.UUID;
 @RequestMapping("/api/items")
 @Tag(name = "Items", description = "API for managing shop items")
 public class ItemController {
+
     private final ItemService itemService;
 
-    /**
-     * API endpoint to retrieve all items.
-     * @return list of {@link ItemDto}
-     */
     @GetMapping(path = "/all", produces = "application/json")
     @Operation(
             summary = "Get all items",
             description = "Returns a complete list of all items available in the shop"
     )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Successfully retrieved list of items",
-            content = @Content(
-                    mediaType = "application/json",
-                    schema = @Schema(implementation = ItemDto.class)
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successfully retrieved list of items",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ItemDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
             )
-    )
+    })
     public List<ItemDto> getAllItems() {
         return itemService.getAllItems();
     }
 
-    /**
-     * API endpoint to retrieve an item by its ID.
-     * @param id
-     * @return {@link ItemDto}
-     */
-    @GetMapping(path = "/{id}", produces = "application/json")
+    @GetMapping(path = "/{uuid}", produces = "application/json")
     @Operation(
             summary = "Get item by UUID",
             description = "Returns information about a specific item by its unique identifier"
@@ -74,6 +76,11 @@ public class ItemController {
                     responseCode = "404",
                     description = "Item not found with the specified UUID",
                     content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
             )
     })
     public ItemDto getItemById(
@@ -82,16 +89,12 @@ public class ItemController {
                     required = true,
                     example = "123e4567-e89b-12d3-a456-426614174000"
             )
-            @PathVariable UUID id) {
-        return itemService.getItemById(id);
+            @PathVariable UUID uuid) {
+        return itemService.getItemById(uuid);
     }
 
-    /**
-     * API endpoint to add a new item.
-     * @param {@link ItemDto}
-     * @return {@link ItemDto}
-     */
     @PostMapping(path = "/add", consumes = "application/json", produces = "application/json")
+    @ResponseStatus(HttpStatus.CREATED)
     @Operation(
             summary = "Create new item",
             description = "Creates a new item in the shop. Item status must match quantity: " +
@@ -99,7 +102,7 @@ public class ItemController {
     )
     @ApiResponses(value = {
             @ApiResponse(
-                    responseCode = "200",
+                    responseCode = "201",
                     description = "Item successfully created",
                     content = @Content(
                             mediaType = "application/json",
@@ -112,6 +115,16 @@ public class ItemController {
                             "- Item with this name already exists, " +
                             "- Invalid status for quantity (e.g., OUT_OF_STOCK with positive quantity), " +
                             "- Status must be OUT_OF_STOCK when quantity is 0",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Item with this name already exists",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
                     content = @Content
             )
     })
@@ -128,12 +141,7 @@ public class ItemController {
         return itemService.createItem(itemDto);
     }
 
-    /**
-     * API endpoint to update an existing item.
-     * @param {@link ItemDto}
-     * @return {@link ItemDto}
-     */
-    @PutMapping(path = "/{id}/update", consumes = "application/json", produces = "application/json")
+    @PutMapping(path = "/{uuid}/update", consumes = "application/json", produces = "application/json")
     @Operation(
             summary = "Update existing item",
             description = "Updates information about an existing item. Item status must match quantity: " +
@@ -149,16 +157,25 @@ public class ItemController {
                     )
             ),
             @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid data: " +
+                            "- Invalid status for quantity (e.g., OUT_OF_STOCK with positive quantity), " +
+                            "- Status must be OUT_OF_STOCK when quantity is 0",
+                    content = @Content
+            ),
+            @ApiResponse(
                     responseCode = "404",
                     description = "Item not found with the specified UUID",
                     content = @Content
             ),
             @ApiResponse(
-                    responseCode = "400",
-                    description = "Invalid data: " +
-                            "- Name already taken by another item, " +
-                            "- Invalid status for quantity (e.g., OUT_OF_STOCK with positive quantity), " +
-                            "- Status must be OUT_OF_STOCK when quantity is 0",
+                    responseCode = "409",
+                    description = "Name already taken by another item",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
                     content = @Content
             )
     })
@@ -168,7 +185,7 @@ public class ItemController {
                     required = true,
                     example = "123e4567-e89b-12d3-a456-426614174000"
             )
-            @PathVariable UUID id,
+            @PathVariable UUID uuid,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Updated item data. Note: status must be OUT_OF_STOCK if quantity is 0 or null, " +
                             "and cannot be OUT_OF_STOCK if quantity > 0",
@@ -178,6 +195,75 @@ public class ItemController {
                     )
             )
             @RequestBody ItemDto itemDto) {
-        return itemService.updateItem(id, itemDto);
+        return itemService.updateItem(uuid, itemDto);
+    }
+
+    @DeleteMapping(path = "/{uuid}/delete")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(
+            summary = "Delete item",
+            description = "Deletes an item from the shop. If the item belongs to a collection, " +
+                    "it will be removed from the collection as well."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Item successfully deleted",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Item not found with the specified UUID",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
+            )
+    })
+    public void deleteItem(
+            @Parameter(
+                    description = "UUID of the item to delete",
+                    required = true,
+                    example = "123e4567-e89b-12d3-a456-426614174000"
+            )
+            @PathVariable UUID uuid) {
+        itemService.deleteItem(uuid);
+    }
+
+    @GetMapping(path = "/collection/{collectionUuid}", produces = "application/json")
+    @Operation(
+            summary = "Get items by collection UUID",
+            description = "Returns all items that belong to a specific collection"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successfully retrieved items for the collection",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ItemDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Collection not found with the specified UUID",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
+            )
+    })
+    public List<ItemDto> getItemsByCollectionUuid(
+            @Parameter(
+                    description = "Collection UUID",
+                    required = true,
+                    example = "123e4567-e89b-12d3-a456-426614174000"
+            )
+            @PathVariable UUID collectionUuid) {
+        return itemService.getItemsByCollectionUuid(collectionUuid);
     }
 }

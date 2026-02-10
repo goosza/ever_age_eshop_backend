@@ -4,7 +4,7 @@ import com.everage.eshop.entity.OrderStatus;
 
 import java.time.LocalDateTime;
 
-public record OrderStatusHistoryDTO(
+public record OrderStatusHistoryDto(
         Long id,
         OrderStatus oldStatus,
         OrderStatus newStatus,

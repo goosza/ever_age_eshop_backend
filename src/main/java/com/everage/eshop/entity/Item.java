@@ -9,6 +9,10 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ForeignKey;
 import org.hibernate.annotations.Type;
 import lombok.Data;
 
@@ -39,4 +43,14 @@ public class Item {
     private ItemStatus status = ItemStatus.ACTIVE;
     @Column(nullable = false)
     private Integer quantity;
+    @Column(length = 100)
+    private String colour;
+
+    // Relationship with Collection
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "collection_uuid",
+            foreignKey = @ForeignKey(name = "fk_item_collection")
+    )
+    private Collection collection;
 }
