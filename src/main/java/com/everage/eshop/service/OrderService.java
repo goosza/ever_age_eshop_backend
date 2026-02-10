@@ -13,7 +13,7 @@ import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.exception.item.InsufficientStockException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.dto.mapper.OrderMapper;
-import com.everage.eshop.exception.OrderNotFoundException;
+import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.repository.ItemRepository;
 import com.everage.eshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;

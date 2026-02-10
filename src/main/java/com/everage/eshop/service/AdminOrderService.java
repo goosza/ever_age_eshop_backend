@@ -3,7 +3,7 @@ package com.everage.eshop.service;
 import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderStatus;
-import com.everage.eshop.exception.OrderNotFoundException;
+import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.dto.mapper.OrderMapper;
 import com.everage.eshop.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;

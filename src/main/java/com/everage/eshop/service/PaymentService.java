@@ -6,7 +6,7 @@ import com.everage.eshop.dto.mapper.PaymentMapper;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.Payment;
 import com.everage.eshop.entity.PaymentStatus;
-import com.everage.eshop.exception.OrderNotFoundException;
+import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.repository.OrderRepository;
 import com.everage.eshop.repository.PaymentRepository;
 import com.everage.eshop.service.gateway.StripePaymentGateway;

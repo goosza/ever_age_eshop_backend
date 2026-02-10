@@ -1,9 +1,14 @@
 package com.everage.eshop.service;
 
 import com.everage.eshop.dto.CollectionDto;
+import com.everage.eshop.dto.CollectionRequest;
 import com.everage.eshop.dto.mapper.CollectionMapper;
 import com.everage.eshop.entity.Collection;
 import com.everage.eshop.entity.Item;
+import com.everage.eshop.exception.collection.CollectionAlreadyExistsException;
+import com.everage.eshop.exception.collection.CollectionNotFoundException;
+import com.everage.eshop.exception.item.ItemNotFoundException;
+import com.everage.eshop.exception.item.ItemNotInCollectionException;
 import com.everage.eshop.repository.CollectionRepository;
 import com.everage.eshop.repository.ItemRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -33,21 +38,21 @@ public class CollectionService {
     }
 
     @Transactional(readOnly = true)
-    public CollectionDto getCollectionById(UUID id) {
-        log.debug("Fetching collection with id: {}", id);
-        Collection collection = collectionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Collection not found with id: " + id));
+    public CollectionDto getCollectionByUuid(UUID uuid) {
+        log.debug("Fetching collection with uuid: {}", uuid);
+        Collection collection = collectionRepository.findById(uuid)
+                .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
         return collectionMapper.toDto(collection);
     }
 
     @Transactional
-    public CollectionDto createCollection(CollectionDto dto) {
+    public CollectionDto createCollection(CollectionRequest dto) {
         log.debug("Creating collection with name: {}", dto.name());
 
         // Check if collection with this name already exists
         collectionRepository.findByName(dto.name()).ifPresent(existing -> {
             log.error("Collection already exists with name: {}", dto.name());
-            throw new IllegalArgumentException("Collection with name '" + dto.name() + "' already exists");
+            throw new CollectionAlreadyExistsException("Collection with name '" + dto.name() + "' already exists");
         });
 
         Collection collection = new Collection();
@@ -57,24 +62,24 @@ public class CollectionService {
                 ? new ArrayList<>(dto.imageUrls())
                 : new ArrayList<>());
 
-        Collection saved = collectionRepository.persist(collection); // Hypersistence method
-        log.info("Created collection with id: {}", saved.getUuid());
+        Collection savedCollection = collectionRepository.persist(collection); // Hypersistence method
+        log.info("Created collection with uuid: {}", savedCollection.getUuid());
 
-        return collectionMapper.toDto(saved);
+        return collectionMapper.toDto(savedCollection);
     }
 
     @Transactional
-    public CollectionDto updateCollection(UUID id, CollectionDto dto) {
-        log.debug("Updating collection with id: {}", id);
+    public CollectionDto updateCollection(UUID uuid, CollectionDto dto) {
+        log.debug("Updating collection with uuid: {}", uuid);
 
-        Collection collection = collectionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Collection not found with id: " + id));
+        Collection collection = collectionRepository.findById(uuid)
+                .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
 
         // Check if name is being changed and if new name already exists
         if (!collection.getName().equals(dto.name())) {
             collectionRepository.findByName(dto.name()).ifPresent(existing -> {
                 log.error("Collection already exists with name: {}", dto.name());
-                throw new IllegalArgumentException("Collection with name '" + dto.name() + "' already exists");
+                throw new CollectionAlreadyExistsException("Collection with name '" + dto.name() + "' already exists");
             });
         }
 
@@ -85,17 +90,17 @@ public class CollectionService {
         }
 
         Collection updated = collectionRepository.merge(collection); // Hypersistence method
-        log.info("Updated collection with id: {}", id);
+        log.info("Updated collection with uuid: {}", uuid);
 
         return collectionMapper.toDto(updated);
     }
 
     @Transactional
-    public void deleteCollection(UUID id) {
-        log.debug("Deleting collection with id: {}", id);
+    public void deleteCollection(UUID uuid) {
+        log.debug("Deleting collection with uuid: {}", uuid);
 
-        Collection collection = collectionRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Collection not found with id: " + id));
+        Collection collection = collectionRepository.findById(uuid)
+                .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
 
         // Remove collection reference from all items
         collection.getItems().forEach(item -> {
@@ -103,40 +108,48 @@ public class CollectionService {
             item.setCollection(null);
         });
 
-        collectionRepository.remove(collection); // Hypersistence method
-        log.info("Deleted collection with id: {}", id);
+        collectionRepository.delete(collection); // Hypersistence method
+        log.info("Deleted collection with uuid: {}", uuid);
     }
 
     @Transactional
-    public void addItemToCollection(UUID collectionId, UUID itemId) {
-        log.debug("Adding item {} to collection {}", itemId, collectionId);
+    public CollectionDto addItemToCollection(UUID collectionUuid, UUID itemUuid) {
+        log.debug("Adding item {} to collection {}", itemUuid, collectionUuid);
 
-        Collection collection = collectionRepository.findById(collectionId)
-                .orElseThrow(() -> new EntityNotFoundException("Collection not found with id: " + collectionId));
+        Collection collection = collectionRepository.findById(collectionUuid)
+                .orElseThrow(() -> new CollectionNotFoundException("Collection not found with id: " + collectionUuid));
 
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + itemId));
+        Item item = itemRepository.findById(itemUuid)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + itemUuid));
 
         collection.addItem(item);
         collectionRepository.persist(collection);
 
-        log.info("Added item {} to collection {}", itemId, collectionId);
+        log.info("Added item {} to collection {}", itemUuid, collectionUuid);
+
+        return collectionMapper.toDto(collection);
     }
 
     @Transactional
-    public void removeItemFromCollection(UUID itemId) {
-        log.debug("Removing item {} from its collection", itemId);
+    public CollectionDto removeItemFromCollection(UUID collectionUuid, UUID itemUuid) {
+        log.debug("Removing item {} from collection {}", itemUuid, collectionUuid);
 
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new EntityNotFoundException("Item not found with id: " + itemId));
+        Collection collection = collectionRepository.findById(collectionUuid)
+                .orElseThrow(() -> new CollectionNotFoundException("Collection not found with id: " + collectionUuid));
 
-        if (item.getCollection() != null) {
-            UUID collectionId = item.getCollection().getUuid();
-            item.getCollection().removeItem(item);
-            itemRepository.persist(item);
-            log.info("Removed item {} from collection {}", itemId, collectionId);
-        } else {
-            log.warn("Item {} is not in any collection", itemId);
+        Item item = itemRepository.findById(itemUuid)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + itemUuid));
+
+        if (!collection.getItems().contains(item)) {
+            log.warn("Item {} is not in collection {}", itemUuid, collectionUuid);
+            throw new ItemNotInCollectionException("Item " + itemUuid + " is not in collection " + collectionUuid);
         }
+
+        collection.removeItem(item);
+        collectionRepository.persist(collection);
+
+        log.info("Removed item {} from collection {}", itemUuid, collectionUuid);
+
+        return collectionMapper.toDto(collection);
     }
 }
