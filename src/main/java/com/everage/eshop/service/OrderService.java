@@ -1,7 +1,12 @@
 package com.everage.eshop.service;
 
-import com.everage.eshop.dto.*;
+import com.everage.eshop.dto.CheckoutRequest;
 import com.everage.eshop.dto.OrderDto;
+import com.everage.eshop.dto.OrderItemRequest;
+import com.everage.eshop.dto.PaymentRequest;
+import com.everage.eshop.dto.PaymentResponse;
+import com.everage.eshop.dto.ShippingRequest;
+import com.everage.eshop.dto.ShippingResponse;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderItem;

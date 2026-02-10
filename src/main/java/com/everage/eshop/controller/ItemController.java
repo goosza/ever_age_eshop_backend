@@ -22,8 +22,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-//import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 import java.util.UUID;
 
@@ -232,5 +230,40 @@ public class ItemController {
             )
             @PathVariable UUID uuid) {
         itemService.deleteItem(uuid);
+    }
+
+    @GetMapping(path = "/collection/{collectionUuid}", produces = "application/json")
+    @Operation(
+            summary = "Get items by collection UUID",
+            description = "Returns all items that belong to a specific collection"
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Successfully retrieved items for the collection",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ItemDto.class)
+                    )
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Collection not found with the specified UUID",
+                    content = @Content
+            ),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Internal server error",
+                    content = @Content
+            )
+    })
+    public List<ItemDto> getItemsByCollectionUuid(
+            @Parameter(
+                    description = "Collection UUID",
+                    required = true,
+                    example = "123e4567-e89b-12d3-a456-426614174000"
+            )
+            @PathVariable UUID collectionUuid) {
+        return itemService.getItemsByCollectionUuid(collectionUuid);
     }
 }

@@ -156,4 +156,14 @@ public class ItemService {
         itemRepository.delete(item);
         log.info("Item deleted successfully with uuid: {}", uuid);
     }
+
+    @Transactional(readOnly = true)
+    public List<ItemDto> getItemsByCollectionUuid(UUID collectionUuid) {
+        log.info("Fetching items for collection uuid: {}", collectionUuid);
+        List<ItemDto> items = itemMapper.toDtoList(
+                itemRepository.findByCollectionUuid(collectionUuid)
+        );
+        log.info("Found {} items for collection {}", items.size(), collectionUuid);
+        return items;
+    }
 }

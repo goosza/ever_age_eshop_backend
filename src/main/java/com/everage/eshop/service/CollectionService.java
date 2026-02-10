@@ -1,5 +1,6 @@
 package com.everage.eshop.service;
 
+import com.everage.eshop.dto.CollectionDetailDto;
 import com.everage.eshop.dto.CollectionDto;
 import com.everage.eshop.dto.CollectionRequest;
 import com.everage.eshop.dto.mapper.CollectionMapper;
@@ -11,7 +12,6 @@ import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.item.ItemNotInCollectionException;
 import com.everage.eshop.repository.CollectionRepository;
 import com.everage.eshop.repository.ItemRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,11 +38,11 @@ public class CollectionService {
     }
 
     @Transactional(readOnly = true)
-    public CollectionDto getCollectionByUuid(UUID uuid) {
+    public CollectionDetailDto getCollectionByUuid(UUID uuid) {
         log.debug("Fetching collection with uuid: {}", uuid);
         Collection collection = collectionRepository.findById(uuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
-        return collectionMapper.toDto(collection);
+        return collectionMapper.toDetailDto(collection);
     }
 
     @Transactional
