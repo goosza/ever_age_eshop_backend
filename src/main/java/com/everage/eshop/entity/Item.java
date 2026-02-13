@@ -44,7 +44,7 @@ public class Item {
     @Column(nullable = false)
     private Integer quantity;
     @Column(length = 100)
-    private String colour;
+    private String color;
 
     // Relationship with Collection
     @ManyToOne(fetch = FetchType.LAZY)

@@ -66,7 +66,7 @@ class ItemControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Test Item"))
-                .andExpect(jsonPath("$.colour").value("red"))
+                .andExpect(jsonPath("$.color").value("red"))
                 .andExpect(jsonPath("$.collection.name").value("Test Collection"));
     }
 
