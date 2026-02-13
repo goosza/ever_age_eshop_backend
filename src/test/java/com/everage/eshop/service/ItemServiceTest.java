@@ -394,6 +394,7 @@ class ItemServiceTest {
                         "Test Collection",
                         "Collection Description",
                         List.of("colUrl1"),
+                        List.of(),
                         LocalDateTime.now(),
                         LocalDateTime.now()
                 )

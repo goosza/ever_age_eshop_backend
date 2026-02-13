@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
-@Schema(description = "Collection data model (without items)")
+@Schema(description = "Collection data model (with items)")
 public record CollectionDto(
 
         @Schema(description = "Unique collection identifier",
@@ -23,6 +23,9 @@ public record CollectionDto(
 
         @ArraySchema(schema = @Schema(implementation = String.class))
         List<String> imageUrls,
+
+        @Schema(description = "Items in this collection")
+        List<ItemDto> items,
 
         @Schema(accessMode = Schema.AccessMode.READ_ONLY)
         LocalDateTime createdAt,
