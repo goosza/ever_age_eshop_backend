@@ -71,7 +71,7 @@ class ItemServiceTest {
         // Then
         assertNotNull(result);
         assertEquals("Test Item", result.name());
-        assertEquals("red", result.colour());
+        assertEquals("red", result.color());
         assertNotNull(result.collection());
         verify(itemRepository).findById(uuid);
         verify(itemMapper).toDto(item);
@@ -106,7 +106,7 @@ class ItemServiceTest {
         // Then
         assertNotNull(result);
         assertEquals("Test Item", result.name());
-        assertEquals("red", result.colour());
+        assertEquals("red", result.color());
         assertNotNull(result.collection());
         verify(itemRepository).findByName(inputDto.name());
         verify(itemMapper).toEntity(inputDto);
@@ -180,7 +180,7 @@ class ItemServiceTest {
         // Then
         assertNotNull(result);
         assertEquals("Test Item", result.name());
-        assertEquals("red", result.colour());
+        assertEquals("red", result.color());
         verify(itemRepository).findById(uuid);
         verify(itemRepository).findByName(inputDto.name());
         verify(itemMapper).toDto(item);
@@ -365,7 +365,7 @@ class ItemServiceTest {
         item.setPrice(BigDecimal.valueOf(19.99));
         item.setQuantity(10);
         item.setStatus(ItemStatus.ACTIVE);
-        item.setColour("red");
+        item.setColor("red");
         item.setImageUrls(List.of("url1"));
         return item;
     }
@@ -394,6 +394,7 @@ class ItemServiceTest {
                         "Test Collection",
                         "Collection Description",
                         List.of("colUrl1"),
+                        List.of(),
                         LocalDateTime.now(),
                         LocalDateTime.now()
                 )

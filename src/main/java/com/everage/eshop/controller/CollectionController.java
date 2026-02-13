@@ -1,6 +1,5 @@
 package com.everage.eshop.controller;
 
-import com.everage.eshop.dto.CollectionDetailDto;
 import com.everage.eshop.dto.CollectionDto;
 import com.everage.eshop.dto.CollectionRequest;
 import com.everage.eshop.service.CollectionService;
@@ -85,7 +84,7 @@ public class CollectionController {
                     content = @Content
             )
     })
-    public CollectionDetailDto getCollectionById(
+    public CollectionDto getCollectionById(
             @Parameter(
                     description = "Collection UUID",
                     required = true,

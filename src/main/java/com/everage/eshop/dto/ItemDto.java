@@ -56,10 +56,10 @@ public record ItemDto(
                 minimum = "0")
         Integer quantity,
 
-        @Schema(description = "Item colour",
+        @Schema(description = "Item color",
                 example = "Black",
                 maxLength = 100)
-        String colour,
+        String color,
 
         @Schema(description = "Collection this item belongs to",
                 accessMode = Schema.AccessMode.READ_ONLY)
