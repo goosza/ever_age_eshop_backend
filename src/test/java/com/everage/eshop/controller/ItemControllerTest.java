@@ -1,5 +1,6 @@
 package com.everage.eshop.controller;
 
+import com.everage.eshop.dto.CollectionDto;
 import com.everage.eshop.dto.ItemDto;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.item.ItemAlreadyExistsException;
@@ -291,11 +292,12 @@ class ItemControllerTest {
                 ItemStatus.ACTIVE,
                 10,
                 "red",
-                new CollectionSimpleDto(
+                new CollectionDto(
                         UUID.randomUUID(),
                         "Test Collection",
                         "Collection Description",
                         List.of("colUrl1"),
+                        List.of(),  // No items in collection for this test
                         LocalDateTime.now(),
                         LocalDateTime.now()
                 )
