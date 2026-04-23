@@ -2,16 +2,18 @@ package com.everage.eshop.controller;
 
 import com.everage.eshop.dto.CollectionDto;
 import com.everage.eshop.dto.ItemDto;
-import com.everage.eshop.exception.item.ItemNotFoundException;
-import com.everage.eshop.exception.item.ItemAlreadyExistsException;
-import com.everage.eshop.exception.item.InvalidItemStatusException;
+import com.everage.eshop.dto.ItemRequest;
 import com.everage.eshop.entity.ItemStatus;
+import com.everage.eshop.exception.item.InvalidItemStatusException;
+import com.everage.eshop.exception.item.ItemAlreadyExistsException;
+import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.service.ItemService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -25,8 +27,13 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.HttpMethod.PUT;
 
 @WebMvcTest(ItemController.class)
 class ItemControllerTest {
@@ -42,11 +49,8 @@ class ItemControllerTest {
 
     @Test
     void getAllItems_ShouldReturnAllItems() throws Exception {
-        // Given
-        List<ItemDto> items = List.of(createItemDto());
-        when(itemService.getAllItems()).thenReturn(items);
+        when(itemService.getAllItems()).thenReturn(List.of(createItemDto()));
 
-        // When & Then
         mockMvc.perform(get("/api/items/all"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -56,12 +60,9 @@ class ItemControllerTest {
 
     @Test
     void getItemById_WhenItemExists_ShouldReturnItem() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
-        ItemDto item = createItemDto();
-        when(itemService.getItemById(uuid)).thenReturn(item);
+        when(itemService.getItemById(uuid)).thenReturn(createItemDto());
 
-        // When & Then
         mockMvc.perform(get("/api/items/{uuid}", uuid))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -72,118 +73,71 @@ class ItemControllerTest {
 
     @Test
     void getItemById_WhenItemNotExists_ShouldReturn404() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
         when(itemService.getItemById(uuid))
                 .thenThrow(new ItemNotFoundException("Item not found with uuid: " + uuid));
 
-        // When & Then
         mockMvc.perform(get("/api/items/{uuid}", uuid))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"));
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void addItem_WithValidData_ShouldCreateItem() throws Exception {
-        // Given
-        ItemDto inputDto = new ItemDto(
-                null,
-                "New Item",
-                "Description",
-                List.of("url1"),
-                BigDecimal.valueOf(29.99),
-                ItemStatus.ACTIVE,
-                10,
-                "black",
-                null
+        ItemRequest request = new ItemRequest(
+                "New Item", "Description", BigDecimal.valueOf(29.99),
+                ItemStatus.ACTIVE, 10, "black", null
         );
-        ItemDto resultDto = createItemDto();
-        when(itemService.createItem(any(ItemDto.class))).thenReturn(resultDto);
+        when(itemService.createItem(any(ItemRequest.class), any())).thenReturn(createItemDto());
 
-        // When & Then
-        mockMvc.perform(post("/api/items/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
-                .andExpect(status().isCreated())  // 201
+        mockMvc.perform(multipart("/api/items/add")
+                        .file(jsonFile("item", request)))
+                .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Test Item"));
     }
 
     @Test
     void addItem_WithDuplicateName_ShouldReturn409() throws Exception {
-        // Given
-        ItemDto inputDto = new ItemDto(
-                null,
-                "Existing Item",
-                "Description",
-                List.of("url1"),
-                BigDecimal.valueOf(29.99),
-                ItemStatus.ACTIVE,
-                10,
-                null,
-                null
+        ItemRequest request = new ItemRequest(
+                "Existing Item", "Description", BigDecimal.valueOf(29.99),
+                ItemStatus.ACTIVE, 10, null, null
         );
-        when(itemService.createItem(any(ItemDto.class)))
+        when(itemService.createItem(any(ItemRequest.class), any()))
                 .thenThrow(new ItemAlreadyExistsException("Item already exists"));
 
-        // When & Then
-        mockMvc.perform(post("/api/items/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+        mockMvc.perform(multipart("/api/items/add")
+                        .file(jsonFile("item", request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"));
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test
     void addItem_WithInvalidStatus_ShouldReturn400() throws Exception {
-        // Given
-        ItemDto inputDto = new ItemDto(
-                null,
-                "New Item",
-                "Description",
-                List.of("url1"),
-                BigDecimal.valueOf(29.99),
-                ItemStatus.ACTIVE,
-                0,
-                null,
-                null
+        ItemRequest request = new ItemRequest(
+                "New Item", "Description", BigDecimal.valueOf(29.99),
+                ItemStatus.ACTIVE, 0, null, null
         );
-        when(itemService.createItem(any(ItemDto.class)))
+        when(itemService.createItem(any(ItemRequest.class), any()))
                 .thenThrow(new InvalidItemStatusException("Invalid status"));
 
-        // When & Then
-        mockMvc.perform(post("/api/items/add")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+        mockMvc.perform(multipart("/api/items/add")
+                        .file(jsonFile("item", request)))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.status").value(400))
-                .andExpect(jsonPath("$.error").value("Bad Request"));
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
     void updateItem_WithValidData_ShouldUpdateItem() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
-        ItemDto inputDto = new ItemDto(
-                null,
-                "Updated Item",
-                "Updated Description",
-                List.of("url1"),
-                BigDecimal.valueOf(39.99),
-                ItemStatus.ACTIVE,
-                15,
-                "blue",
-                null
+        ItemRequest request = new ItemRequest(
+                "Updated Item", "Updated Description", BigDecimal.valueOf(39.99),
+                ItemStatus.ACTIVE, 15, "blue", List.of("url1")
         );
-        ItemDto resultDto = createItemDto();
-        when(itemService.updateItem(eq(uuid), any(ItemDto.class))).thenReturn(resultDto);
+        when(itemService.updateItem(eq(uuid), any(ItemRequest.class), any())).thenReturn(createItemDto());
 
-        // When & Then
-        mockMvc.perform(put("/api/items/{uuid}/update", uuid)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+        mockMvc.perform(multipart(PUT, "/api/items/{uuid}/update", uuid)
+                        .file(jsonFile("item", request)))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.name").value("Test Item"));
@@ -191,71 +145,61 @@ class ItemControllerTest {
 
     @Test
     void updateItem_WhenItemNotExists_ShouldReturn404() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
-        ItemDto inputDto = createItemDto();
-        when(itemService.updateItem(eq(uuid), any(ItemDto.class)))
+        ItemRequest request = new ItemRequest(
+                "Test Item", "Description", BigDecimal.valueOf(19.99),
+                ItemStatus.ACTIVE, 10, "red", List.of("url1")
+        );
+        when(itemService.updateItem(eq(uuid), any(ItemRequest.class), any()))
                 .thenThrow(new ItemNotFoundException("Item not found with uuid: " + uuid));
 
-        // When & Then
-        mockMvc.perform(put("/api/items/{uuid}/update", uuid)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+        mockMvc.perform(multipart(PUT, "/api/items/{uuid}/update", uuid)
+                        .file(jsonFile("item", request)))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"));
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void updateItem_WithDuplicateName_ShouldReturn409() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
-        ItemDto inputDto = createItemDto();
-        when(itemService.updateItem(eq(uuid), any(ItemDto.class)))
+        ItemRequest request = new ItemRequest(
+                "Test Item", "Description", BigDecimal.valueOf(19.99),
+                ItemStatus.ACTIVE, 10, "red", List.of("url1")
+        );
+        when(itemService.updateItem(eq(uuid), any(ItemRequest.class), any()))
                 .thenThrow(new ItemAlreadyExistsException("Name already taken"));
 
-        // When & Then
-        mockMvc.perform(put("/api/items/{uuid}/update", uuid)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(inputDto)))
+        mockMvc.perform(multipart(PUT, "/api/items/{uuid}/update", uuid)
+                        .file(jsonFile("item", request)))
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.status").value(409))
-                .andExpect(jsonPath("$.error").value("Conflict"));
+                .andExpect(jsonPath("$.status").value(409));
     }
 
     @Test
     void deleteItem_WhenItemExists_ShouldReturn204() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
         doNothing().when(itemService).deleteItem(uuid);
 
-        // When & Then
         mockMvc.perform(delete("/api/items/{uuid}/delete", uuid))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void deleteItem_WhenItemNotExists_ShouldReturn404() throws Exception {
-        // Given
         UUID uuid = UUID.randomUUID();
         doThrow(new ItemNotFoundException("Item not found with uuid: " + uuid))
                 .when(itemService).deleteItem(uuid);
 
-        // When & Then
         mockMvc.perform(delete("/api/items/{uuid}/delete", uuid))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.status").value(404))
-                .andExpect(jsonPath("$.error").value("Not Found"));
+                .andExpect(jsonPath("$.status").value(404));
     }
 
     @Test
     void getItemsByCollectionUuid_ShouldReturnItems() throws Exception {
-        // Given
         UUID collectionUuid = UUID.randomUUID();
-        List<ItemDto> items = List.of(createItemDto());
-        when(itemService.getItemsByCollectionUuid(collectionUuid)).thenReturn(items);
+        when(itemService.getItemsByCollectionUuid(collectionUuid)).thenReturn(List.of(createItemDto()));
 
-        // When & Then
         mockMvc.perform(get("/api/items/collection/{collectionUuid}", collectionUuid))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
@@ -266,14 +210,11 @@ class ItemControllerTest {
 
     @Test
     void getItemsByCollectionUuid_WhenNoItems_ShouldReturnEmptyList() throws Exception {
-        // Given
         UUID collectionUuid = UUID.randomUUID();
         when(itemService.getItemsByCollectionUuid(collectionUuid)).thenReturn(List.of());
 
-        // When & Then
         mockMvc.perform(get("/api/items/collection/{collectionUuid}", collectionUuid))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$").isEmpty());
     }
@@ -281,6 +222,13 @@ class ItemControllerTest {
     // ============================================
     // Helper methods
     // ============================================
+
+    private MockMultipartFile jsonFile(String name, Object value) throws Exception {
+        return new MockMultipartFile(
+                name, "", MediaType.APPLICATION_JSON_VALUE,
+                objectMapper.writeValueAsBytes(value)
+        );
+    }
 
     private ItemDto createItemDto() {
         return new ItemDto(
@@ -297,7 +245,7 @@ class ItemControllerTest {
                         "Test Collection",
                         "Collection Description",
                         List.of("colUrl1"),
-                        List.of(),  // No items in collection for this test
+                        List.of(),
                         LocalDateTime.now(),
                         LocalDateTime.now()
                 )

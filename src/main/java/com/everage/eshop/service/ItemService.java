@@ -1,21 +1,23 @@
 package com.everage.eshop.service;
 
 import com.everage.eshop.dto.ItemDto;
+import com.everage.eshop.dto.ItemRequest;
 import com.everage.eshop.dto.mapper.ItemMapper;
 import com.everage.eshop.entity.Item;
+import com.everage.eshop.entity.ItemStatus;
 import com.everage.eshop.exception.item.ItemAlreadyExistsException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.item.InvalidItemStatusException;
 import com.everage.eshop.repository.ItemRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import com.everage.eshop.entity.ItemStatus;
 
 @Service
 @Slf4j
@@ -23,6 +25,7 @@ import com.everage.eshop.entity.ItemStatus;
 public class ItemService {
     private final ItemRepository itemRepository;
     private final ItemMapper itemMapper;
+    private final StorageService storageService;
 
     @Transactional(readOnly = true)
     public List<ItemDto> getAllItems() {
@@ -42,16 +45,23 @@ public class ItemService {
     }
 
     @Transactional
-    public ItemDto createItem(ItemDto itemDto) {
-        if (itemRepository.findByName(itemDto.name()).isPresent()) {
-            throw new ItemAlreadyExistsException("Item with name " + itemDto.name() + " already exists");
+    public ItemDto createItem(ItemRequest request, List<MultipartFile> images) {
+        if (itemRepository.findByName(request.name()).isPresent()) {
+            throw new ItemAlreadyExistsException("Item with name " + request.name() + " already exists");
         }
-        log.info("Creating new item: {}", itemDto.name());
-        Item item = itemMapper.toEntity(itemDto);
-        
-        // Validate item status against quantity
-        validateItemStatus(item, itemDto.status());
-        
+        log.info("Creating new item: {}", request.name());
+
+        List<String> imageUrls = uploadImages(images);
+
+        Item item = new Item();
+        item.setName(request.name());
+        item.setDescription(request.description());
+        item.setPrice(request.price());
+        item.setQuantity(request.quantity());
+        item.setColor(request.color());
+        item.setImageUrls(imageUrls);
+        validateItemStatus(item, request.status());
+
         itemRepository.persist(item);
         ItemDto result = itemMapper.toDto(item);
         log.info("Item created successfully with uuid: {}, name: {}", result.uuid(), result.name());
@@ -59,35 +69,39 @@ public class ItemService {
     }
 
     @Transactional
-    public ItemDto updateItem(UUID uuid, ItemDto itemDto) {
-        log.info("Updating item with uuid: {}, name: {}", uuid, itemDto.name());
+    public ItemDto updateItem(UUID uuid, ItemRequest request, List<MultipartFile> images) {
+        log.info("Updating item with uuid: {}", uuid);
         Item item = itemRepository.findById(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
 
-        itemRepository.findByName(itemDto.name())
-                .filter(existingItem -> !existingItem.getUuid().equals(uuid))
-                .ifPresent(existingItem -> {
+        itemRepository.findByName(request.name())
+                .filter(existing -> !existing.getUuid().equals(uuid))
+                .ifPresent(existing -> {
                     throw new ItemAlreadyExistsException("Name already taken");
                 });
 
-        item.setName(itemDto.name());
-        item.setDescription(itemDto.description());
-        item.setPrice(itemDto.price());
-        item.setQuantity(itemDto.quantity());
-        if (itemDto.imageUrls() != null) {
-            item.setImageUrls(new ArrayList<>(itemDto.imageUrls()));
-        } else {
-            // If null, clear
-            item.setImageUrls(new ArrayList<>());
-        }
-        // Validate item status against quantity
-        validateItemStatus(item, itemDto.status());
-//        itemRepository.persist(item);
+        // Delete images that are no longer in the "keep" list
+        List<String> urlsToKeep = request.existingImageUrls() != null ? request.existingImageUrls() : List.of();
+        List<String> urlsToDelete = item.getImageUrls().stream()
+                .filter(url -> !urlsToKeep.contains(url))
+                .toList();
+        storageService.deleteAll(urlsToDelete);
+
+        // Upload new images and merge with kept ones
+        List<String> newUrls = uploadImages(images);
+        List<String> mergedUrls = new ArrayList<>(urlsToKeep);
+        mergedUrls.addAll(newUrls);
+
+        item.setName(request.name());
+        item.setDescription(request.description());
+        item.setPrice(request.price());
+        item.setQuantity(request.quantity());
+        item.setColor(request.color());
+        item.setImageUrls(mergedUrls);
+        validateItemStatus(item, request.status());
+
         ItemDto result = itemMapper.toDto(item);
         log.info("Item updated successfully with uuid: {}, name: {}", result.uuid(), result.name());
-        log.info("Updated info: name={}, description={}, price={}, status={}, quantity={}, images count={}",
-                result.name(), result.description(), result.price(), result.status(),
-                result.quantity(), result.imageUrls() != null ? result.imageUrls().size() : 0);
         return result;
     }
 
@@ -147,6 +161,9 @@ public class ItemService {
         Item item = itemRepository.findById(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
 
+        // Delete images from R2
+        storageService.deleteAll(item.getImageUrls());
+
         // Remove item from collection if it belongs to one
         if (item.getCollection() != null) {
             log.info("Removing item {} from collection {}", uuid, item.getCollection().getUuid());
@@ -165,5 +182,13 @@ public class ItemService {
         );
         log.info("Found {} items for collection {}", items.size(), collectionUuid);
         return items;
+    }
+
+    private List<String> uploadImages(List<MultipartFile> images) {
+        if (images == null || images.isEmpty()) return new ArrayList<>();
+        return images.stream()
+                .filter(f -> f != null && !f.isEmpty())
+                .map(f -> storageService.upload(f, "items"))
+                .toList();
     }
 }
