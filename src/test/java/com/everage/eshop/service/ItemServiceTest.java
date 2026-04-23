@@ -2,19 +2,21 @@ package com.everage.eshop.service;
 
 import com.everage.eshop.dto.CollectionDto;
 import com.everage.eshop.dto.ItemDto;
+import com.everage.eshop.dto.ItemRequest;
 import com.everage.eshop.dto.mapper.ItemMapper;
 import com.everage.eshop.entity.Collection;
 import com.everage.eshop.entity.Item;
-import com.everage.eshop.exception.item.ItemNotFoundException;
-import com.everage.eshop.exception.item.ItemAlreadyExistsException;
-import com.everage.eshop.exception.item.InvalidItemStatusException;
 import com.everage.eshop.entity.ItemStatus;
+import com.everage.eshop.exception.item.InvalidItemStatusException;
+import com.everage.eshop.exception.item.ItemAlreadyExistsException;
+import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.repository.ItemRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -34,22 +36,22 @@ class ItemServiceTest {
     @Mock
     private ItemMapper itemMapper;
 
+    @Mock
+    private StorageService storageService;
+
     @InjectMocks
     private ItemService itemService;
 
     @Test
     void getAllItems_ShouldReturnAllItems() {
-        // Given
         List<Item> items = List.of(createItem());
         List<ItemDto> itemDtos = List.of(createItemDto());
 
         when(itemRepository.findAll()).thenReturn(items);
         when(itemMapper.toDtoList(items)).thenReturn(itemDtos);
 
-        // When
         List<ItemDto> result = itemService.getAllItems();
 
-        // Then
         assertEquals(1, result.size());
         verify(itemRepository).findAll();
         verify(itemMapper).toDtoList(items);
@@ -57,7 +59,6 @@ class ItemServiceTest {
 
     @Test
     void getItemById_WhenItemExists_ShouldReturnItem() {
-        // Given
         UUID uuid = UUID.randomUUID();
         Item item = createItem();
         ItemDto itemDto = createItemDto();
@@ -65,10 +66,8 @@ class ItemServiceTest {
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
         when(itemMapper.toDto(item)).thenReturn(itemDto);
 
-        // When
         ItemDto result = itemService.getItemById(uuid);
 
-        // Then
         assertNotNull(result);
         assertEquals("Test Item", result.name());
         assertEquals("red", result.color());
@@ -79,11 +78,9 @@ class ItemServiceTest {
 
     @Test
     void getItemById_WhenItemNotExists_ShouldThrowException() {
-        // Given
         UUID uuid = UUID.randomUUID();
         when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThrows(ItemNotFoundException.class, () -> itemService.getItemById(uuid));
         verify(itemRepository).findById(uuid);
         verifyNoInteractions(itemMapper);
@@ -91,151 +88,132 @@ class ItemServiceTest {
 
     @Test
     void createItem_ShouldCreateAndReturnItem() {
-        // Given
-        ItemDto inputDto = createItemDto();
-        Item item = createItem();
+        ItemRequest request = createItemRequest(10, ItemStatus.ACTIVE);
         ItemDto resultDto = createItemDto();
 
-        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
-        when(itemMapper.toEntity(inputDto)).thenReturn(item);
-        when(itemMapper.toDto(item)).thenReturn(resultDto);
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
+        when(itemMapper.toDto(any(Item.class))).thenReturn(resultDto);
 
-        // When
-        ItemDto result = itemService.createItem(inputDto);
+        ItemDto result = itemService.createItem(request, List.of());
 
-        // Then
         assertNotNull(result);
         assertEquals("Test Item", result.name());
-        assertEquals("red", result.color());
-        assertNotNull(result.collection());
-        verify(itemRepository).findByName(inputDto.name());
-        verify(itemMapper).toEntity(inputDto);
-        verify(itemRepository).persist(item);
-        verify(itemMapper).toDto(item);
+        verify(itemRepository).findByName(request.name());
+        verify(itemRepository).persist(any(Item.class));
+        verifyNoInteractions(storageService);
     }
 
     @Test
     void createItem_WhenItemAlreadyExists_ShouldThrowException() {
-        // Given
-        ItemDto inputDto = createItemDto();
-        Item existingItem = createItem();
+        ItemRequest request = createItemRequest(10, ItemStatus.ACTIVE);
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.of(createItem()));
 
-        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.of(existingItem));
-
-        // When & Then
-        assertThrows(ItemAlreadyExistsException.class, () -> itemService.createItem(inputDto));
-        verify(itemRepository).findByName(inputDto.name());
+        assertThrows(ItemAlreadyExistsException.class, () -> itemService.createItem(request, List.of()));
+        verify(itemRepository).findByName(request.name());
         verifyNoMoreInteractions(itemRepository, itemMapper);
     }
 
     @Test
     void createItem_WithZeroQuantityAndActiveStatus_ShouldThrowException() {
-        // Given
-        ItemDto inputDto = new ItemDto(
-                null, "Test Item", "Description",
-                List.of("url1"), BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE, 0, null, null
-        );
-        Item item = createItemWithQuantity(0);
+        ItemRequest request = createItemRequest(0, ItemStatus.ACTIVE);
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
 
-        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
-        when(itemMapper.toEntity(inputDto)).thenReturn(item);
-
-        // When & Then
-        assertThrows(InvalidItemStatusException.class, () -> itemService.createItem(inputDto));
+        assertThrows(InvalidItemStatusException.class, () -> itemService.createItem(request, List.of()));
     }
 
     @Test
     void createItem_WithPositiveQuantityAndOutOfStockStatus_ShouldThrowException() {
-        // Given
-        ItemDto inputDto = new ItemDto(
-                null, "Test Item", "Description",
-                List.of("url1"), BigDecimal.valueOf(19.99),
-                ItemStatus.OUT_OF_STOCK, 5, null, null
-        );
-        Item item = createItemWithQuantity(5);
+        ItemRequest request = createItemRequest(5, ItemStatus.OUT_OF_STOCK);
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
 
-        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
-        when(itemMapper.toEntity(inputDto)).thenReturn(item);
-
-        // When & Then
-        assertThrows(InvalidItemStatusException.class, () -> itemService.createItem(inputDto));
+        assertThrows(InvalidItemStatusException.class, () -> itemService.createItem(request, List.of()));
     }
 
     @Test
     void updateItem_ShouldUpdateAndReturnItem() {
-        // Given
         UUID uuid = UUID.randomUUID();
-        ItemDto inputDto = createItemDto();
         Item item = createItem();
+        ItemRequest request = new ItemRequest(
+                "Test Item", "Description", BigDecimal.valueOf(19.99),
+                ItemStatus.ACTIVE, 10, "red", List.of("url1")
+        );
         ItemDto resultDto = createItemDto();
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
-        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.empty());
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(resultDto);
 
-        // When
-        ItemDto result = itemService.updateItem(uuid, inputDto);
+        ItemDto result = itemService.updateItem(uuid, request, List.of());
 
-        // Then
         assertNotNull(result);
         assertEquals("Test Item", result.name());
-        assertEquals("red", result.color());
         verify(itemRepository).findById(uuid);
-        verify(itemRepository).findByName(inputDto.name());
+        verify(itemRepository).findByName(request.name());
         verify(itemMapper).toDto(item);
     }
 
     @Test
-    void updateItem_WhenItemNotExists_ShouldThrowException() {
-        // Given
+    void updateItem_DeletesRemovedImages() {
         UUID uuid = UUID.randomUUID();
-        ItemDto inputDto = createItemDto();
+        Item item = createItem();
+        item.setImageUrls(List.of("https://media.example.com/items/old.jpg", "https://media.example.com/items/keep.jpg"));
 
+        // keep only one, drop the other
+        ItemRequest request = new ItemRequest(
+                "Test Item", "Description", BigDecimal.valueOf(19.99),
+                ItemStatus.ACTIVE, 10, "red", List.of("https://media.example.com/items/keep.jpg")
+        );
+
+        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
+        when(itemMapper.toDto(item)).thenReturn(createItemDto());
+
+        itemService.updateItem(uuid, request, List.of());
+
+        verify(storageService).deleteAll(List.of("https://media.example.com/items/old.jpg"));
+    }
+
+    @Test
+    void updateItem_WhenItemNotExists_ShouldThrowException() {
+        UUID uuid = UUID.randomUUID();
+        ItemRequest request = createItemRequest(10, ItemStatus.ACTIVE);
         when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
 
-        // When & Then
-        assertThrows(ItemNotFoundException.class, () -> itemService.updateItem(uuid, inputDto));
+        assertThrows(ItemNotFoundException.class, () -> itemService.updateItem(uuid, request, List.of()));
         verify(itemRepository).findById(uuid);
         verifyNoMoreInteractions(itemRepository, itemMapper);
     }
 
     @Test
     void updateItem_WhenNameAlreadyTaken_ShouldThrowException() {
-        // Given
         UUID uuid = UUID.randomUUID();
         UUID otherId = UUID.randomUUID();
-        ItemDto inputDto = createItemDto();
+        ItemRequest request = createItemRequest(10, ItemStatus.ACTIVE);
         Item item = createItem();
         Item existingItem = createItem();
         existingItem.setUuid(otherId);
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
-        when(itemRepository.findByName(inputDto.name())).thenReturn(Optional.of(existingItem));
+        when(itemRepository.findByName(request.name())).thenReturn(Optional.of(existingItem));
 
-        // When & Then
-        assertThrows(ItemAlreadyExistsException.class, () -> itemService.updateItem(uuid, inputDto));
+        assertThrows(ItemAlreadyExistsException.class, () -> itemService.updateItem(uuid, request, List.of()));
     }
 
     @Test
     void deleteItem_WhenItemExists_ShouldDeleteItem() {
-        // Given
         UUID uuid = UUID.randomUUID();
         Item item = createItem();
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
 
-        // When
         itemService.deleteItem(uuid);
 
-        // Then
-        verify(itemRepository).findById(uuid);
+        verify(storageService).deleteAll(item.getImageUrls());
         verify(itemRepository).delete(item);
     }
 
     @Test
     void deleteItem_WhenItemBelongsToCollection_ShouldRemoveFromCollectionAndDelete() {
-        // Given
         UUID uuid = UUID.randomUUID();
         Item item = createItem();
         Collection collection = createCollection();
@@ -243,23 +221,18 @@ class ItemServiceTest {
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
 
-        // When
         itemService.deleteItem(uuid);
 
-        // Then
         assertNull(item.getCollection());
-        verify(itemRepository).findById(uuid);
+        verify(storageService).deleteAll(item.getImageUrls());
         verify(itemRepository).delete(item);
     }
 
     @Test
     void deleteItem_WhenItemNotExists_ShouldThrowException() {
-        // Given
         UUID uuid = UUID.randomUUID();
-
         when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThrows(ItemNotFoundException.class, () -> itemService.deleteItem(uuid));
         verify(itemRepository).findById(uuid);
         verify(itemRepository, never()).delete(any());
@@ -267,7 +240,6 @@ class ItemServiceTest {
 
     @Test
     void getItemsByCollectionUuid_ShouldReturnItems() {
-        // Given
         UUID collectionUuid = UUID.randomUUID();
         List<Item> items = List.of(createItem());
         List<ItemDto> itemDtos = List.of(createItemDto());
@@ -275,10 +247,8 @@ class ItemServiceTest {
         when(itemRepository.findByCollectionUuid(collectionUuid)).thenReturn(items);
         when(itemMapper.toDtoList(items)).thenReturn(itemDtos);
 
-        // When
         List<ItemDto> result = itemService.getItemsByCollectionUuid(collectionUuid);
 
-        // Then
         assertEquals(1, result.size());
         assertEquals("Test Item", result.get(0).name());
         verify(itemRepository).findByCollectionUuid(collectionUuid);
@@ -287,23 +257,19 @@ class ItemServiceTest {
 
     @Test
     void getItemsByCollectionUuid_WhenNoItems_ShouldReturnEmptyList() {
-        // Given
         UUID collectionUuid = UUID.randomUUID();
 
         when(itemRepository.findByCollectionUuid(collectionUuid)).thenReturn(List.of());
         when(itemMapper.toDtoList(List.of())).thenReturn(List.of());
 
-        // When
         List<ItemDto> result = itemService.getItemsByCollectionUuid(collectionUuid);
 
-        // Then
         assertTrue(result.isEmpty());
         verify(itemRepository).findByCollectionUuid(collectionUuid);
     }
 
     @Test
     void decreaseQuantity_ShouldDecreaseAndReturnItem() {
-        // Given
         UUID uuid = UUID.randomUUID();
         Item item = createItemWithQuantity(10);
         ItemDto resultDto = createItemDto();
@@ -311,10 +277,8 @@ class ItemServiceTest {
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
         when(itemMapper.toDto(item)).thenReturn(resultDto);
 
-        // When
         ItemDto result = itemService.decreaseQuantity(uuid, 3);
 
-        // Then
         assertNotNull(result);
         assertEquals(7, item.getQuantity());
         verify(itemRepository).findById(uuid);
@@ -323,31 +287,24 @@ class ItemServiceTest {
 
     @Test
     void decreaseQuantity_WhenQuantityBecomesZero_ShouldSetOutOfStock() {
-        // Given
         UUID uuid = UUID.randomUUID();
         Item item = createItemWithQuantity(5);
         item.setStatus(ItemStatus.ACTIVE);
-        ItemDto resultDto = createItemDto();
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
-        when(itemMapper.toDto(item)).thenReturn(resultDto);
+        when(itemMapper.toDto(item)).thenReturn(createItemDto());
 
-        // When
         itemService.decreaseQuantity(uuid, 5);
 
-        // Then
         assertEquals(0, item.getQuantity());
         assertEquals(ItemStatus.OUT_OF_STOCK, item.getStatus());
     }
 
     @Test
     void decreaseQuantity_WhenItemNotExists_ShouldThrowException() {
-        // Given
         UUID uuid = UUID.randomUUID();
-
         when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
 
-        // When & Then
         assertThrows(ItemNotFoundException.class, () -> itemService.decreaseQuantity(uuid, 1));
         verify(itemRepository).findById(uuid);
         verifyNoMoreInteractions(itemRepository, itemMapper);
@@ -356,6 +313,11 @@ class ItemServiceTest {
     // ============================================
     // Helper methods
     // ============================================
+
+    private ItemRequest createItemRequest(int quantity, ItemStatus status) {
+        return new ItemRequest("Test Item", "Description", BigDecimal.valueOf(19.99),
+                status, quantity, "red", List.of("url1"));
+    }
 
     private Item createItem() {
         Item item = new Item();
@@ -398,20 +360,6 @@ class ItemServiceTest {
                         LocalDateTime.now(),
                         LocalDateTime.now()
                 )
-        );
-    }
-
-    private ItemDto createItemDtoWithoutCollection() {
-        return new ItemDto(
-                UUID.randomUUID(),
-                "Test Item",
-                "Description",
-                List.of("url1"),
-                BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE,
-                10,
-                null,
-                null
         );
     }
 

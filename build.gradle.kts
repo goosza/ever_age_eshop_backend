@@ -61,6 +61,9 @@ dependencies {
     // HTTP Client for Shipping API
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
+    // Cloudflare R2 / S3-compatible storage
+    implementation("software.amazon.awssdk:s3:2.26.12")
+
     // TEST
     "testImplementation"("org.springframework.boot:spring-boot-starter-test")
     "testImplementation"("org.springframework.security:spring-security-test")
