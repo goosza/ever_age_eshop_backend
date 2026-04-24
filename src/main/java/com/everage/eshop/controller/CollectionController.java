@@ -6,7 +6,9 @@ import com.everage.eshop.service.CollectionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -98,10 +100,9 @@ public class CollectionController {
 
     @PostMapping(path = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(
-            summary = "Create new collection",
-            description = "Creates a new collection. Send collection fields as form parts alongside optional image files."
-    )
+    @Operation(summary = "Create new collection",
+            description = "Creates a new collection. Send collection fields as form parts alongside optional image files.")
+    @RequestBody(content = @Content(encoding = @Encoding(name = "collection", contentType = MediaType.APPLICATION_JSON_VALUE)))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Collection created",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -115,11 +116,10 @@ public class CollectionController {
     }
 
     @PutMapping(path = "/{uuid}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(
-            summary = "Update collection",
+    @Operation(summary = "Update collection",
             description = "Updates a collection. Pass existingImageUrls in the collection part to keep specific images; " +
-                    "omitted URLs will be deleted from R2. New files in 'images' will be uploaded and appended."
-    )
+                    "omitted URLs will be deleted from R2. New files in 'images' will be uploaded and appended.")
+    @RequestBody(content = @Content(encoding = @Encoding(name = "collection", contentType = MediaType.APPLICATION_JSON_VALUE)))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Collection updated",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,

@@ -6,7 +6,9 @@ import com.everage.eshop.service.ItemService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -56,10 +58,9 @@ public class ItemController {
 
     @PostMapping(path = "/add", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(
-            summary = "Create new item",
-            description = "Creates a new item. Send item fields as form parts alongside optional image files."
-    )
+    @Operation(summary = "Create new item",
+            description = "Creates a new item. Send item fields as form parts alongside optional image files.")
+    @RequestBody(content = @Content(encoding = @Encoding(name = "item", contentType = MediaType.APPLICATION_JSON_VALUE)))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Item created",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
@@ -73,11 +74,10 @@ public class ItemController {
     }
 
     @PutMapping(path = "/{uuid}/update", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(
-            summary = "Update existing item",
+    @Operation(summary = "Update existing item",
             description = "Updates an item. Pass existingImageUrls in the item part to keep specific images; " +
-                    "omitted URLs will be deleted from R2. New files in 'images' will be uploaded and appended."
-    )
+                    "omitted URLs will be deleted from R2. New files in 'images' will be uploaded and appended.")
+    @RequestBody(content = @Content(encoding = @Encoding(name = "item", contentType = MediaType.APPLICATION_JSON_VALUE)))
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Item updated",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
