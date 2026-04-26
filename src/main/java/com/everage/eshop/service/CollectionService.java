@@ -42,8 +42,8 @@ public class CollectionService {
     @Transactional(readOnly = true)
     public List<CollectionDto> getAllCollections() {
         log.debug("Fetching all collections");
-        // Return collections WITHOUT items for performance
-        return collectionMapper.toDtoList(collectionRepository.findAll());
+        return collectionMapper.toDtoList(collectionRepository.findAll())
+                .stream().map(this::resolveUrls).toList();
     }
 
     /**
@@ -59,21 +59,13 @@ public class CollectionService {
         Collection collection = collectionRepository.findById(uuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
 
-        // Map collection WITHOUT items
         CollectionDto dto = collectionMapper.toDto(collection);
-
-        // Manually add items WITHOUT collection reference (via MapStruct)
         List<ItemDto> items = itemMapper.toDtoListWithoutCollection(collection.getItems());
 
-        return new CollectionDto(
-                dto.uuid(),
-                dto.name(),
-                dto.description(),
-                dto.imageUrls(),
-                items,
-                dto.createdAt(),
-                dto.updatedAt()
-        );
+        return resolveUrls(new CollectionDto(
+                dto.uuid(), dto.name(), dto.description(), dto.imageUrls(),
+                items, dto.createdAt(), dto.updatedAt()
+        ));
     }
 
     /**
@@ -103,7 +95,7 @@ public class CollectionService {
         Collection savedCollection = collectionRepository.persist(collection);
         log.info("Created collection with uuid: {}", savedCollection.getUuid());
 
-        return collectionMapper.toDto(savedCollection);
+        return resolveUrls(collectionMapper.toDto(savedCollection));
     }
 
     /**
@@ -151,15 +143,10 @@ public class CollectionService {
         CollectionDto updatedDto = collectionMapper.toDto(updated);
         List<ItemDto> items = itemMapper.toDtoListWithoutCollection(updated.getItems());
 
-        return new CollectionDto(
-                updatedDto.uuid(),
-                updatedDto.name(),
-                updatedDto.description(),
-                updatedDto.imageUrls(),
-                items,
-                updatedDto.createdAt(),
-                updatedDto.updatedAt()
-        );
+        return resolveUrls(new CollectionDto(
+                updatedDto.uuid(), updatedDto.name(), updatedDto.description(), updatedDto.imageUrls(),
+                items, updatedDto.createdAt(), updatedDto.updatedAt()
+        ));
     }
 
     /**
@@ -218,15 +205,10 @@ public class CollectionService {
         CollectionDto dto = collectionMapper.toDto(collection);
         List<ItemDto> items = itemMapper.toDtoListWithoutCollection(collection.getItems());
 
-        return new CollectionDto(
-                dto.uuid(),
-                dto.name(),
-                dto.description(),
-                dto.imageUrls(),
-                items,
-                dto.createdAt(),
-                dto.updatedAt()
-        );
+        return resolveUrls(new CollectionDto(
+                dto.uuid(), dto.name(), dto.description(), dto.imageUrls(),
+                items, dto.createdAt(), dto.updatedAt()
+        ));
     }
 
     /**
@@ -263,14 +245,18 @@ public class CollectionService {
         CollectionDto dto = collectionMapper.toDto(collection);
         List<ItemDto> items = itemMapper.toDtoListWithoutCollection(collection.getItems());
 
+        return resolveUrls(new CollectionDto(
+                dto.uuid(), dto.name(), dto.description(), dto.imageUrls(),
+                items, dto.createdAt(), dto.updatedAt()
+        ));
+    }
+
+    /** Replaces storage keys in imageUrls with full public URLs. */
+    private CollectionDto resolveUrls(CollectionDto dto) {
         return new CollectionDto(
-                dto.uuid(),
-                dto.name(),
-                dto.description(),
-                dto.imageUrls(),
-                items,
-                dto.createdAt(),
-                dto.updatedAt()
+                dto.uuid(), dto.name(), dto.description(),
+                storageService.toPublicUrls(dto.imageUrls()),
+                dto.items(), dto.createdAt(), dto.updatedAt()
         );
     }
 

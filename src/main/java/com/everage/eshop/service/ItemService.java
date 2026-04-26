@@ -30,7 +30,8 @@ public class ItemService {
     @Transactional(readOnly = true)
     public List<ItemDto> getAllItems() {
         log.info("Fetching all items");
-        List<ItemDto> items = itemMapper.toDtoList(itemRepository.findAll());
+        List<ItemDto> items = itemMapper.toDtoList(itemRepository.findAll())
+                .stream().map(this::resolveUrls).toList();
         log.info("Found {} items", items.size());
         return items;
     }
@@ -41,7 +42,7 @@ public class ItemService {
         Item item = itemRepository.findById(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
         log.info("Found item: {}", item.getName());
-        return itemMapper.toDto(item);
+        return resolveUrls(itemMapper.toDto(item));
     }
 
     @Transactional
@@ -63,7 +64,7 @@ public class ItemService {
         validateItemStatus(item, request.status());
 
         itemRepository.persist(item);
-        ItemDto result = itemMapper.toDto(item);
+        ItemDto result = resolveUrls(itemMapper.toDto(item));
         log.info("Item created successfully with uuid: {}, name: {}", result.uuid(), result.name());
         return result;
     }
@@ -100,7 +101,7 @@ public class ItemService {
         item.setImageUrls(mergedUrls);
         validateItemStatus(item, request.status());
 
-        ItemDto result = itemMapper.toDto(item);
+        ItemDto result = resolveUrls(itemMapper.toDto(item));
         log.info("Item updated successfully with uuid: {}, name: {}", result.uuid(), result.name());
         return result;
     }
@@ -178,10 +179,20 @@ public class ItemService {
     public List<ItemDto> getItemsByCollectionUuid(UUID collectionUuid) {
         log.info("Fetching items for collection uuid: {}", collectionUuid);
         List<ItemDto> items = itemMapper.toDtoList(
-                itemRepository.findByCollectionUuid(collectionUuid)
-        );
+                itemRepository.findByCollectionUuid(collectionUuid))
+                .stream().map(this::resolveUrls).toList();
         log.info("Found {} items for collection {}", items.size(), collectionUuid);
         return items;
+    }
+
+    /** Replaces storage keys in imageUrls with full public URLs. */
+    private ItemDto resolveUrls(ItemDto dto) {
+        return new ItemDto(
+                dto.uuid(), dto.name(), dto.description(),
+                storageService.toPublicUrls(dto.imageUrls()),
+                dto.price(), dto.status(), dto.quantity(), dto.color(),
+                dto.collection()
+        );
     }
 
     private List<String> uploadImages(List<MultipartFile> images) {

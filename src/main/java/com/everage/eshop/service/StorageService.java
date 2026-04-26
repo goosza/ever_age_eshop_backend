@@ -27,7 +27,7 @@ public class StorageService {
      *
      * @param file   multipart file to upload
      * @param folder e.g. "items" or "collections"
-     * @return public URL of the uploaded file
+     * @return storage key of the uploaded file (e.g. "items/uuid_filename.jpg")
      */
     public String upload(MultipartFile file, String folder) {
         String key = folder + "/" + UUID.randomUUID() + "_" + sanitizeFilename(file.getOriginalFilename());
@@ -45,21 +45,48 @@ public class StorageService {
             throw new RuntimeException("Failed to upload file: " + file.getOriginalFilename(), e);
         }
 
+        return key;
+    }
+
+    /**
+     * Converts a storage key to a full public URL.
+     *
+     * @param key storage key e.g. "items/uuid_filename.jpg"
+     * @return full public URL e.g. "https://media.everage.com/items/uuid_filename.jpg"
+     */
+    public String toPublicUrl(String key) {
+        if (key == null) return null;
+        // Already a full URL (legacy data) — return as-is
+        if (key.startsWith("http://") || key.startsWith("https://")) return key;
         return r2Properties.publicUrl() + "/" + key;
     }
 
     /**
-     * Deletes a file from R2 by its public URL.
-     *
-     * @param publicUrl full public URL of the file
+     * Converts a list of storage keys to full public URLs.
      */
-    public void delete(String publicUrl) {
+    public List<String> toPublicUrls(List<String> keys) {
+        if (keys == null) return List.of();
+        return keys.stream().map(this::toPublicUrl).toList();
+    }
+
+    /**
+     * Deletes a file from R2 by its storage key or legacy public URL.
+     *
+     * @param keyOrUrl storage key (e.g. "items/uuid_file.jpg") or legacy full URL
+     */
+    public void delete(String keyOrUrl) {
+        if (keyOrUrl == null) return;
+        String key;
         String prefix = r2Properties.publicUrl() + "/";
-        if (!publicUrl.startsWith(prefix)) {
-            log.warn("Skipping delete — URL not managed by R2: {}", publicUrl);
-            return;
+        if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://")) {
+            if (!keyOrUrl.startsWith(prefix)) {
+                log.warn("Skipping delete — URL not managed by R2: {}", keyOrUrl);
+                return;
+            }
+            key = keyOrUrl.substring(prefix.length());
+        } else {
+            key = keyOrUrl;
         }
-        String key = publicUrl.substring(prefix.length());
         s3Client.deleteObject(DeleteObjectRequest.builder()
                 .bucket(r2Properties.bucket())
                 .key(key)
