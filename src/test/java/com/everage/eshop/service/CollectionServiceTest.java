@@ -57,6 +57,7 @@ class CollectionServiceTest {
 
         when(collectionRepository.findAll()).thenReturn(collections);
         when(collectionMapper.toDtoList(collections)).thenReturn(dtos);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<CollectionDto> result = collectionService.getAllCollections();
 
@@ -75,6 +76,7 @@ class CollectionServiceTest {
         when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(collection.getItems())).thenReturn(List.of());
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         CollectionDto result = collectionService.getCollectionByUuid(uuid);
 
@@ -101,12 +103,12 @@ class CollectionServiceTest {
         when(collectionRepository.findByName("Alien")).thenReturn(Optional.empty());
         when(collectionRepository.persist(any(Collection.class))).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         CollectionDto result = collectionService.createCollection(request, List.of());
 
         assertNotNull(result);
         verify(collectionRepository).persist(any(Collection.class));
-        verifyNoInteractions(storageService);
     }
 
     @Test
@@ -125,23 +127,23 @@ class CollectionServiceTest {
     void updateCollection_ShouldUpdateAndReturn() {
         UUID uuid = UUID.randomUUID();
         Collection collection = createCollection();
-        collection.setImageUrls(new ArrayList<>(List.of("https://media.example.com/collections/old.jpg")));
+        collection.setImageUrls(new ArrayList<>(List.of("collections/old.jpg")));
         CollectionDto dto = createCollectionDto();
 
-        // Same name → no name-uniqueness check triggered
         CollectionMultipartRequest request = new CollectionMultipartRequest(
-                "Alien", "New desc", List.of() // keep nothing → delete old image
+                "Alien", "New desc", List.of()
         );
 
         when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
         when(collectionRepository.merge(collection)).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(any())).thenReturn(List.of());
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         CollectionDto result = collectionService.updateCollection(uuid, request, List.of());
 
         assertNotNull(result);
-        verify(storageService).deleteAll(List.of("https://media.example.com/collections/old.jpg"));
+        verify(storageService).deleteAll(List.of("collections/old.jpg"));
         verify(collectionRepository).merge(collection);
     }
 
@@ -177,13 +179,13 @@ class CollectionServiceTest {
     void deleteCollection_ShouldDeleteImagesAndCollection() {
         UUID uuid = UUID.randomUUID();
         Collection collection = createCollection();
-        collection.setImageUrls(new ArrayList<>(List.of("https://media.example.com/collections/img.jpg")));
+        collection.setImageUrls(new ArrayList<>(List.of("collections/img.jpg")));
 
         when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
 
         collectionService.deleteCollection(uuid);
 
-        verify(storageService).deleteAll(List.of("https://media.example.com/collections/img.jpg"));
+        verify(storageService).deleteAll(List.of("collections/img.jpg"));
         verify(collectionRepository).delete(collection);
     }
 
@@ -211,6 +213,7 @@ class CollectionServiceTest {
         when(collectionRepository.persist(collection)).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(any())).thenReturn(List.of());
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         CollectionDto result = collectionService.addItemToCollection(collectionUuid, itemUuid);
 
@@ -256,6 +259,7 @@ class CollectionServiceTest {
         when(collectionRepository.persist(collection)).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(any())).thenReturn(List.of());
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         CollectionDto result = collectionService.removeItemFromCollection(collectionUuid, itemUuid);
 

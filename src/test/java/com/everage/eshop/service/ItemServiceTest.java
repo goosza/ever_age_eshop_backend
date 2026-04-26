@@ -49,6 +49,7 @@ class ItemServiceTest {
 
         when(itemRepository.findAll()).thenReturn(items);
         when(itemMapper.toDtoList(items)).thenReturn(itemDtos);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<ItemDto> result = itemService.getAllItems();
 
@@ -65,6 +66,7 @@ class ItemServiceTest {
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
         when(itemMapper.toDto(item)).thenReturn(itemDto);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ItemDto result = itemService.getItemById(uuid);
 
@@ -93,6 +95,7 @@ class ItemServiceTest {
 
         when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(any(Item.class))).thenReturn(resultDto);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ItemDto result = itemService.createItem(request, List.of());
 
@@ -100,7 +103,6 @@ class ItemServiceTest {
         assertEquals("Test Item", result.name());
         verify(itemRepository).findByName(request.name());
         verify(itemRepository).persist(any(Item.class));
-        verifyNoInteractions(storageService);
     }
 
     @Test
@@ -142,6 +144,7 @@ class ItemServiceTest {
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
         when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(resultDto);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         ItemDto result = itemService.updateItem(uuid, request, List.of());
 
@@ -156,21 +159,22 @@ class ItemServiceTest {
     void updateItem_DeletesRemovedImages() {
         UUID uuid = UUID.randomUUID();
         Item item = createItem();
-        item.setImageUrls(List.of("https://media.example.com/items/old.jpg", "https://media.example.com/items/keep.jpg"));
+        // Now we store keys, not full URLs
+        item.setImageUrls(List.of("items/old.jpg", "items/keep.jpg"));
 
-        // keep only one, drop the other
         ItemRequest request = new ItemRequest(
                 "Test Item", "Description", BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE, 10, "red", List.of("https://media.example.com/items/keep.jpg")
+                ItemStatus.ACTIVE, 10, "red", List.of("items/keep.jpg")
         );
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
         when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(createItemDto());
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         itemService.updateItem(uuid, request, List.of());
 
-        verify(storageService).deleteAll(List.of("https://media.example.com/items/old.jpg"));
+        verify(storageService).deleteAll(List.of("items/old.jpg"));
     }
 
     @Test
@@ -246,6 +250,7 @@ class ItemServiceTest {
 
         when(itemRepository.findByCollectionUuid(collectionUuid)).thenReturn(items);
         when(itemMapper.toDtoList(items)).thenReturn(itemDtos);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
         List<ItemDto> result = itemService.getItemsByCollectionUuid(collectionUuid);
 
