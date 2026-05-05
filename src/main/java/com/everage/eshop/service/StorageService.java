@@ -3,6 +3,7 @@ package com.everage.eshop.service;
 import com.everage.eshop.config.R2Properties;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -17,6 +18,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@ConditionalOnBean(S3Client.class)
 public class StorageService {
 
     private final S3Client s3Client;
