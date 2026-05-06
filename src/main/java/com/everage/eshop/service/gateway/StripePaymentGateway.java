@@ -1,113 +1,78 @@
 package com.everage.eshop.service.gateway;
 
+import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.stripe.exception.StripeException;
-import com.stripe.model.PaymentIntent;
-import com.stripe.model.Refund;
-import com.stripe.param.PaymentIntentCreateParams;
-import com.stripe.param.RefundCreateParams;
+import com.stripe.model.checkout.Session;
+import com.stripe.param.checkout.SessionCreateParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 public class StripePaymentGateway {
 
     /**
-     * Create a PaymentIntent for card payments
-     * This is the first step in Stripe's payment flow
+     * Create a Stripe Checkout Session for hosted payment page
      */
-    public PaymentIntent createPaymentIntent(String orderId, BigDecimal amount, String customerEmail) {
+    public Session createCheckoutSession(
+            List<SessionCreateParams.LineItem> lineItems,
+            String customerEmail,
+            String successUrl,
+            String cancelUrl,
+            CheckoutSessionRequest.CustomerInfo customerInfo,
+            List<String> productIds,
+            List<Integer> quantities
+    ) {
         try {
-            PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()
-                    .setAmount(amount.multiply(BigDecimal.valueOf(100)).longValue()) // Convert to cents
-                    .setCurrency("eur")
-                    .setDescription("Order #" + orderId)
-                    .setReceiptEmail(customerEmail)
-                    .build();
-
-            PaymentIntent paymentIntent = PaymentIntent.create(params);
-            log.info("PaymentIntent created: {} for order: {}", paymentIntent.getId(), orderId);
-            return paymentIntent;
-
-        } catch (StripeException e) {
-            log.error("Failed to create PaymentIntent for order {}: {}", orderId, e.getMessage());
-            throw new RuntimeException("Payment gateway error: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Confirm payment with token (from Apple Pay, Card, etc)
-     * In production, the frontend would handle this with client_secret
-     * This is a simplified version for testing
-     */
-    public PaymentIntent confirmPayment(String paymentIntentId, String paymentToken) {
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-
-            // In production:
-            // 1. Frontend gets client_secret from createPaymentIntent
-            // 2. Frontend uses Stripe.js to confirm payment with payment method
-            // 3. Backend receives webhook confirming payment success
-            //
-            // For now, we simulate successful confirmation if token is provided
-            log.info("Payment confirmation received for PaymentIntent: {}", paymentIntentId);
-
-            if (paymentIntent.getStatus().equals("succeeded")) {
-                log.info("PaymentIntent already succeeded: {}", paymentIntentId);
-            } else {
-                log.info("PaymentIntent status: {}", paymentIntent.getStatus());
+            // Build metadata with cart information
+            Map<String, String> metadata = new HashMap<>();
+            metadata.put("customer_first_name", customerInfo.firstName());
+            metadata.put("customer_last_name", customerInfo.lastName());
+            metadata.put("customer_phone", customerInfo.phone() != null ? customerInfo.phone() : "");
+            metadata.put("customer_address", customerInfo.address());
+            metadata.put("customer_city", customerInfo.city());
+            metadata.put("customer_postal_code", customerInfo.postalCode());
+            metadata.put("customer_country", customerInfo.country());
+            
+            // Store cart items (product IDs and quantities)
+            for (int i = 0; i < productIds.size(); i++) {
+                metadata.put("product_id_" + i, productIds.get(i));
+                metadata.put("quantity_" + i, quantities.get(i).toString());
             }
+            metadata.put("items_count", String.valueOf(productIds.size()));
 
-            return paymentIntent;
+            SessionCreateParams.Builder paramsBuilder = SessionCreateParams.builder()
+                    .setMode(SessionCreateParams.Mode.PAYMENT)
+                    .setSuccessUrl(successUrl)
+                    .setCancelUrl(cancelUrl)
+                    .setCustomerEmail(customerEmail)
+                    .addAllLineItem(lineItems)
+                    .putAllMetadata(metadata)
+                    .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
+                    .setShippingAddressCollection(
+                            SessionCreateParams.ShippingAddressCollection.builder()
+                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.CZ)
+                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.SK)
+                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.PL)
+                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.DE)
+                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.AT)
+                                    .build()
+                    );
 
-        } catch (StripeException e) {
-            log.error("Failed to confirm payment {}: {}", paymentIntentId, e.getMessage());
-            throw new RuntimeException("Payment confirmation error: " + e.getMessage(), e);
-        }
-    }
+            SessionCreateParams params = paramsBuilder.build();
+            Session session = Session.create(params);
 
-    /**
-     * Refund a PaymentIntent
-     * Can only refund if the PaymentIntent has succeeded
-     */
-    public Refund refundPaymentIntent(String paymentIntentId) {
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-
-            if (!paymentIntent.getStatus().equals("succeeded")) {
-                throw new RuntimeException("Cannot refund PaymentIntent with status: " + paymentIntent.getStatus());
-            }
-
-            // Create refund for the payment
-            RefundCreateParams params = RefundCreateParams.builder()
-                    .setPaymentIntent(paymentIntentId)
-                    .build();
-
-            Refund refund = Refund.create(params);
-            log.info("PaymentIntent {} refunded. Refund ID: {}", paymentIntentId, refund.getId());
-            return refund;
+            log.info("Checkout Session created: {} for customer: {}", session.getId(), customerEmail);
+            return session;
 
         } catch (StripeException e) {
-            log.error("Failed to refund PaymentIntent {}: {}", paymentIntentId, e.getMessage());
-            throw new RuntimeException("PaymentIntent refund error: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Retrieve PaymentIntent status
-     * Useful for checking payment status after user confirms
-     */
-    public PaymentIntent getPaymentIntent(String paymentIntentId) {
-        try {
-            PaymentIntent paymentIntent = PaymentIntent.retrieve(paymentIntentId);
-            log.info("Retrieved PaymentIntent {}: status={}", paymentIntentId, paymentIntent.getStatus());
-            return paymentIntent;
-
-        } catch (StripeException e) {
-            log.error("Failed to retrieve PaymentIntent {}: {}", paymentIntentId, e.getMessage());
-            throw new RuntimeException("Failed to retrieve payment intent: " + e.getMessage(), e);
+            log.error("Failed to create Checkout Session for {}: {}", customerEmail, e.getMessage());
+            throw new RuntimeException("Checkout session creation error: " + e.getMessage(), e);
         }
     }
 }
+
