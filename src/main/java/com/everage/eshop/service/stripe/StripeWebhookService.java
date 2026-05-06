@@ -85,8 +85,8 @@ public class StripeWebhookService {
         
         log.info("Order created: {}", orderDto.orderNumber());
 
-        // Get the created order
-        Order order = orderRepository.findById(orderDto.id())
+        // Get the created order by UUID
+        Order order = orderRepository.findByUuid(orderDto.id())
                 .orElseThrow(() -> new RuntimeException("Order not found after creation"));
 
         // Create payment record

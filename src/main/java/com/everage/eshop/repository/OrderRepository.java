@@ -10,6 +10,7 @@ import java.util.UUID;
 
 @Repository
 public interface OrderRepository extends BaseJpaRepository<Order, UUID> {
+    Optional<Order> findByUuid(UUID id);
     Optional<Order> findByOrderNumber(String orderNumber);
     List<Order> findByEmailOrderByCreatedAtDesc(String email);
 }
