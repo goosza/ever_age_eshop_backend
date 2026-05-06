@@ -6,8 +6,8 @@ services:
   # ============================================
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: everage-app-local
     ports:
       - "8080:8080"
@@ -69,7 +69,7 @@ services:
   #   ports:
   #     - "3100:3100"
   #   volumes:
-  #     - ./loki-config.yml:/etc/loki/local-config.yaml:ro
+  #     - ../config/loki-config.yml:/etc/loki/local-config.yaml:ro
   #     - loki-local-data:/loki
   #   command: -config.file=/etc/loki/local-config.yaml
   #   networks:
@@ -87,7 +87,7 @@ services:
   #   volumes:
   #     - /var/run/docker.sock:/var/run/docker.sock:ro
   #     - /var/lib/docker/containers:/var/lib/docker/containers:ro
-  #     - ./promtail-config.yml:/etc/promtail/config.yml:ro
+  #     - ../config/promtail-config.yml:/etc/promtail/config.yml:ro
   #   command: -config.file=/etc/promtail/config.yml
   #   networks:
   #     - everage-local-network
@@ -113,7 +113,7 @@ services:
   #   volumes:
   #     - grafana-local-data:/var/lib/grafana
   #     # Uncomment if you have grafana-datasources.yml file:
-  #     # - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+  #     # - ../config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
   #   networks:
   #     - everage-local-network
   #   depends_on:
