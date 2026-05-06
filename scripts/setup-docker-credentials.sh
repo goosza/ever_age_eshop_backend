@@ -10,15 +10,16 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-# Check if running as root
-if [ "$EUID" -eq 0 ]; then 
-   echo -e "${RED}❌ Please do not run this script as root${NC}"
-   exit 1
-fi
-
 echo -e "${YELLOW}📦 Installing dependencies...${NC}"
-sudo apt-get update -qq
-sudo apt-get install -y pass gnupg2 wget
+if [ "$EUID" -eq 0 ]; then
+    # Running as root
+    apt-get update -qq
+    apt-get install -y pass gnupg2 wget jq
+else
+    # Running as regular user
+    sudo apt-get update -qq
+    sudo apt-get install -y pass gnupg2 wget jq
+fi
 
 # Check if GPG key exists
 echo -e "${YELLOW}🔑 Checking for GPG key...${NC}"
@@ -67,7 +68,11 @@ CREDENTIAL_HELPER_URL="https://github.com/docker/docker-credential-helpers/relea
 if [ ! -f "/usr/local/bin/docker-credential-pass" ]; then
     wget -q "$CREDENTIAL_HELPER_URL" -O docker-credential-pass
     chmod +x docker-credential-pass
-    sudo mv docker-credential-pass /usr/local/bin/
+    if [ "$EUID" -eq 0 ]; then
+        mv docker-credential-pass /usr/local/bin/
+    else
+        sudo mv docker-credential-pass /usr/local/bin/
+    fi
     echo -e "${GREEN}✅ docker-credential-pass installed${NC}"
 else
     echo -e "${GREEN}✅ docker-credential-pass already installed${NC}"
