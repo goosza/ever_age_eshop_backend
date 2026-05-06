@@ -1,4 +1,4 @@
-package com.everage.eshop.service.gateway;
+package com.everage.eshop.service.shipping;
 
 import com.everage.eshop.config.ZasilkovnaConfig;
 import lombok.RequiredArgsConstructor;

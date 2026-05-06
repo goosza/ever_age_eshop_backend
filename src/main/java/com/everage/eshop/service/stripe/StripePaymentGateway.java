@@ -1,4 +1,4 @@
-package com.everage.eshop.service.gateway;
+package com.everage.eshop.service.stripe;
 
 import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.stripe.exception.StripeException;
@@ -52,16 +52,8 @@ public class StripePaymentGateway {
                     .setCustomerEmail(customerEmail)
                     .addAllLineItem(lineItems)
                     .putAllMetadata(metadata)
-                    .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED)
-                    .setShippingAddressCollection(
-                            SessionCreateParams.ShippingAddressCollection.builder()
-                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.CZ)
-                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.SK)
-                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.PL)
-                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.DE)
-                                    .addAllowedCountry(SessionCreateParams.ShippingAddressCollection.AllowedCountry.AT)
-                                    .build()
-                    );
+                    .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED);
+                    // Убрали .setShippingAddressCollection() - адрес уже собран на фронтенде
 
             SessionCreateParams params = paramsBuilder.build();
             Session session = Session.create(params);

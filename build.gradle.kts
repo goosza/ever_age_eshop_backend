@@ -56,7 +56,7 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:${project.property("mapStructVersion")}")
 
     // Payment Gateway
-    implementation("com.stripe:stripe-java:28.1.0")
+    implementation("com.stripe:stripe-java:32.1.0")
 
     // HTTP Client for Shipping API
     implementation("org.springframework.boot:spring-boot-starter-webflux")

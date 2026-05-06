@@ -1,4 +1,4 @@
-package com.everage.eshop.service;
+package com.everage.eshop.service.stripe;
 
 import com.everage.eshop.dto.CheckoutRequest;
 import com.everage.eshop.dto.OrderItemRequest;
@@ -11,6 +11,8 @@ import com.everage.eshop.entity.PaymentStatus;
 import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.repository.OrderRepository;
 import com.everage.eshop.repository.PaymentRepository;
+import com.everage.eshop.service.OrderService;
+import com.everage.eshop.service.shipping.ShippingService;
 import com.stripe.model.Event;
 import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
@@ -36,20 +38,40 @@ public class StripeWebhookService {
 
     @Transactional
     public void handleCheckoutSessionCompleted(Event event) {
-        Session session = (Session) event.getDataObjectDeserializer()
-                .getObject()
-                .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
+        // Deserialize the session from the event data
+        Session session;
+        try {
+            session = (Session) event.getDataObjectDeserializer()
+                    .getObject()
+                    .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
+        } catch (Exception e) {
+            log.error("Failed to deserialize session: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to deserialize session", e);
+        }
 
         log.info("Checkout session completed: {}", session.getId());
+        
+        // Validate session data
+        if (session.getCustomerDetails() == null || session.getCustomerDetails().getEmail() == null) {
+            log.error("Session missing customer details: {}", session.getId());
+            throw new RuntimeException("Session missing customer details");
+        }
+        
         log.info("Customer email: {}", session.getCustomerDetails().getEmail());
         log.info("Amount total: {}", session.getAmountTotal());
 
         // Extract customer info from session
         String email = session.getCustomerDetails().getEmail();
-        String firstName = session.getCustomerDetails().getName().split(" ")[0];
-        String lastName = session.getCustomerDetails().getName().contains(" ") 
-                ? session.getCustomerDetails().getName().substring(firstName.length() + 1) 
-                : "";
+        String fullName = session.getCustomerDetails().getName();
+        
+        // Parse name
+        String firstName = "Customer";
+        String lastName = "";
+        if (fullName != null && !fullName.isEmpty()) {
+            String[] nameParts = fullName.split(" ", 2);
+            firstName = nameParts[0];
+            lastName = nameParts.length > 1 ? nameParts[1] : "";
+        }
 
         // Extract metadata (we'll store cart items there)
         Map<String, String> metadata = session.getMetadata();
@@ -99,9 +121,16 @@ public class StripeWebhookService {
 
     @Transactional
     public void handleCheckoutSessionExpired(Event event) {
-        Session session = (Session) event.getDataObjectDeserializer()
-                .getObject()
-                .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
+        // Deserialize the session from the event data
+        Session session;
+        try {
+            session = (Session) event.getDataObjectDeserializer()
+                    .getObject()
+                    .orElseThrow(() -> new RuntimeException("Failed to deserialize session"));
+        } catch (Exception e) {
+            log.error("Failed to deserialize session: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to deserialize session", e);
+        }
 
         log.info("Checkout session expired: {}", session.getId());
         log.info("Customer email: {}", session.getCustomerDetails().getEmail());
@@ -113,21 +142,12 @@ public class StripeWebhookService {
     private CheckoutRequest buildCheckoutRequestFromSession(Session session, String firstName, String lastName, String email) {
         Map<String, String> metadata = session.getMetadata();
         
-        // Extract customer info from metadata
+        // Extract customer info from metadata (collected on frontend)
         String phone = metadata.getOrDefault("customer_phone", "");
         String addressLine = metadata.getOrDefault("customer_address", "");
         String city = metadata.getOrDefault("customer_city", "");
         String postalCode = metadata.getOrDefault("customer_postal_code", "");
         String country = metadata.getOrDefault("customer_country", "");
-
-        // If shipping address was collected by Stripe, use it instead
-        if (session.getShippingDetails() != null && session.getShippingDetails().getAddress() != null) {
-            var shippingAddress = session.getShippingDetails().getAddress();
-            addressLine = shippingAddress.getLine1();
-            city = shippingAddress.getCity();
-            postalCode = shippingAddress.getPostalCode();
-            country = shippingAddress.getCountry();
-        }
 
         // Extract cart items from metadata
         List<OrderItemRequest> items = new ArrayList<>();

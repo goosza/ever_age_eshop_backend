@@ -1,10 +1,9 @@
-package com.everage.eshop.service;
+package com.everage.eshop.service.stripe;
 
 import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.repository.ItemRepository;
-import com.everage.eshop.service.gateway.StripePaymentGateway;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
 import lombok.RequiredArgsConstructor;

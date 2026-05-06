@@ -2,7 +2,7 @@ package com.everage.eshop.controller;
 
 import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.everage.eshop.dto.CheckoutSessionResponse;
-import com.everage.eshop.service.StripeCheckoutService;
+import com.everage.eshop.service.stripe.StripeCheckoutService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;

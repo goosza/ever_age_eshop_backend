@@ -1,6 +1,6 @@
 package com.everage.eshop.controller;
 
-import com.everage.eshop.service.StripeWebhookService;
+import com.everage.eshop.service.stripe.StripeWebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;

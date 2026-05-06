@@ -1,4 +1,4 @@
-package com.everage.eshop.service;
+package com.everage.eshop.service.shipping;
 
 import com.everage.eshop.dto.ShippingRequest;
 import com.everage.eshop.dto.ShippingResponse;
@@ -9,7 +9,6 @@ import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.entity.ShippingStatus;
 import com.everage.eshop.repository.OrderRepository;
 import com.everage.eshop.repository.ShippingRepository;
-import com.everage.eshop.service.gateway.ZasilkovnaShippingGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

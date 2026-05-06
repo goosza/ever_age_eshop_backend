@@ -4,7 +4,7 @@ import com.everage.eshop.dto.ShippingRequest;
 import com.everage.eshop.dto.ShippingResponse;
 import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.entity.ShippingStatus;
-import com.everage.eshop.service.ShippingService;
+import com.everage.eshop.service.shipping.ShippingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
