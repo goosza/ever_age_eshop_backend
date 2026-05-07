@@ -6,6 +6,8 @@ import com.everage.eshop.exception.item.InvalidItemStatusException;
 import com.everage.eshop.exception.item.ItemAlreadyExistsException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.item.ItemNotInCollectionException;
+import com.everage.eshop.exception.payment.PaymentAmountTooSmallException;
+import com.everage.eshop.exception.payment.PaymentGatewayException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -56,6 +58,22 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ItemNotInCollectionException.class)
     public ResponseEntity<Map<String, Object>> handleItemNotInCollection(ItemNotInCollectionException ex) {
         log.error("Item not in collection: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    // ============================================
+    // Payment Exceptions
+    // ============================================
+
+    @ExceptionHandler(PaymentAmountTooSmallException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentAmountTooSmall(PaymentAmountTooSmallException ex) {
+        log.error("Payment amount too small: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(PaymentGatewayException.class)
+    public ResponseEntity<Map<String, Object>> handlePaymentGateway(PaymentGatewayException ex) {
+        log.error("Payment gateway error: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 

@@ -3,6 +3,7 @@ package com.everage.eshop.service.stripe;
 import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.everage.eshop.entity.Item;
 import com.everage.eshop.exception.item.ItemNotFoundException;
+import com.everage.eshop.exception.payment.PaymentAmountTooSmallException;
 import com.everage.eshop.repository.ItemRepository;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -24,6 +25,9 @@ public class StripeCheckoutService {
     private final StripePaymentGateway stripePaymentGateway;
     private final ItemRepository itemRepository;
 
+    // Minimum amount in cents for EUR (€0.50 = 50 cents)
+    private static final long MINIMUM_AMOUNT_EUR_CENTS = 50;
+
     @Value("${server.url:http://localhost:8080}")
     private String serverUrl;
 
@@ -35,6 +39,7 @@ public class StripeCheckoutService {
         List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
         List<String> productIds = new ArrayList<>();
         List<Integer> quantities = new ArrayList<>();
+        long totalAmount = 0;
 
         for (CheckoutSessionRequest.CheckoutItem checkoutItem : request.items()) {
             UUID productId = UUID.fromString(checkoutItem.productId());
@@ -45,6 +50,9 @@ public class StripeCheckoutService {
             if (item.getQuantity() < checkoutItem.quantity()) {
                 throw new RuntimeException("Insufficient stock for item: " + item.getName());
             }
+
+            // Calculate total
+            totalAmount += checkoutItem.price() * checkoutItem.quantity();
 
             // Build Stripe line item
             SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
@@ -68,6 +76,15 @@ public class StripeCheckoutService {
             // Store for metadata
             productIds.add(checkoutItem.productId());
             quantities.add(checkoutItem.quantity());
+        }
+
+        // Validate minimum amount
+        if (totalAmount < MINIMUM_AMOUNT_EUR_CENTS) {
+            log.warn("Order amount too small: {} cents (minimum: {} cents)", totalAmount, MINIMUM_AMOUNT_EUR_CENTS);
+            throw new PaymentAmountTooSmallException(
+                String.format("Order amount (€%.2f) is below minimum. Minimum order amount is €0.50.", 
+                    totalAmount / 100.0)
+            );
         }
 
         // Create Checkout Session

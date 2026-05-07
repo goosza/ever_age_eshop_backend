@@ -1,6 +1,9 @@
 package com.everage.eshop.service.stripe;
 
 import com.everage.eshop.dto.CheckoutSessionRequest;
+import com.everage.eshop.exception.payment.PaymentAmountTooSmallException;
+import com.everage.eshop.exception.payment.PaymentGatewayException;
+import com.stripe.exception.InvalidRequestException;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -61,9 +64,21 @@ public class StripePaymentGateway {
             log.info("Checkout Session created: {} for customer: {}", session.getId(), customerEmail);
             return session;
 
+        } catch (InvalidRequestException e) {
+            log.error("Invalid request to Stripe for {}: {}", customerEmail, e.getMessage());
+            
+            // Handle specific Stripe errors
+            if (e.getCode() != null && e.getCode().equals("amount_too_small")) {
+                throw new PaymentAmountTooSmallException(
+                    "Order amount is too small. Minimum order amount is €0.50 (or equivalent in your currency)."
+                );
+            }
+            
+            throw new PaymentGatewayException("Payment request is invalid: " + e.getMessage(), e);
+            
         } catch (StripeException e) {
             log.error("Failed to create Checkout Session for {}: {}", customerEmail, e.getMessage());
-            throw new RuntimeException("Checkout session creation error: " + e.getMessage(), e);
+            throw new PaymentGatewayException("Payment gateway error: " + e.getMessage(), e);
         }
     }
 }
