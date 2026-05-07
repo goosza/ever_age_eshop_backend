@@ -56,7 +56,6 @@ public class StripePaymentGateway {
                     .addAllLineItem(lineItems)
                     .putAllMetadata(metadata)
                     .setBillingAddressCollection(SessionCreateParams.BillingAddressCollection.REQUIRED);
-                    // Убрали .setShippingAddressCollection() - адрес уже собран на фронтенде
 
             SessionCreateParams params = paramsBuilder.build();
             Session session = Session.create(params);
