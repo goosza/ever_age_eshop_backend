@@ -16,7 +16,7 @@ import java.util.List;
 )
 public interface ShippingMapper {
 
-    @Mapping(target = "orderId", expression = "java(shipping.getOrder() != null ? shipping.getOrder().getUuid() : null)")
+    @Mapping(target = "orderUuid", expression = "java(shipping.getOrder() != null ? shipping.getOrder().getUuid() : null)")
     ShippingResponse toDto(Shipping shipping);
 
     List<ShippingResponse> toDtoList(List<Shipping> shippings);

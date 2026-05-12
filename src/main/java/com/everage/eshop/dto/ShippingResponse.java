@@ -7,8 +7,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record ShippingResponse(
-        UUID id,
-        UUID orderId,
+        UUID uuid,
+        UUID orderUuid,
         ShippingProvider provider,
         BigDecimal cost,
         String trackingNumber,

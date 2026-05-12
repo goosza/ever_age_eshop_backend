@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 public record OrderItemDto(
-        UUID id,
+        UUID uuid,
         UUID itemUuid,
         Integer quantity,
         BigDecimal price,

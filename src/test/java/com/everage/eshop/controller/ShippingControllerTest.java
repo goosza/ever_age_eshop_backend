@@ -78,7 +78,7 @@ class ShippingControllerTest {
 
         mockMvc.perform(get("/api/shipping/order/{orderId}", orderId))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.orderId").value(orderId.toString()))
+                .andExpect(jsonPath("$.orderUuid").value(orderId.toString()))
                 .andExpect(jsonPath("$.provider").value("ZASILKOVNA"));
     }
 

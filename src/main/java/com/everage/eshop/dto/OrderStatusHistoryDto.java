@@ -3,9 +3,10 @@ package com.everage.eshop.dto;
 import com.everage.eshop.entity.OrderStatus;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record OrderStatusHistoryDto(
-        Long id,
+        UUID uuid,
         OrderStatus oldStatus,
         OrderStatus newStatus,
         String oldStatusDisplay,
