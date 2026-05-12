@@ -28,8 +28,8 @@ public class StripeCheckoutService {
     // Minimum amount in cents for EUR (€0.50 = 50 cents)
     private static final long MINIMUM_AMOUNT_EUR_CENTS = 50;
 
-    @Value("${server.url:http://localhost:8080}")
-    private String serverUrl;
+    @Value("${frontend.url:http://localhost:3000}")
+    private String frontendUrl;
 
     @Transactional(readOnly = true)
     public String createCheckoutSession(CheckoutSessionRequest request) {
@@ -87,9 +87,9 @@ public class StripeCheckoutService {
             );
         }
 
-        // Create Checkout Session
-        String successUrl = serverUrl + "/checkout/success?session_id={CHECKOUT_SESSION_ID}";
-        String cancelUrl = serverUrl + "/checkout/cancel";
+        // Create Checkout Session - redirect to frontend
+        String successUrl = frontendUrl + "/checkout/success?session_id={CHECKOUT_SESSION_ID}";
+        String cancelUrl = frontendUrl + "/checkout/cancel";
 
         Session session = stripePaymentGateway.createCheckoutSession(
                 lineItems,
