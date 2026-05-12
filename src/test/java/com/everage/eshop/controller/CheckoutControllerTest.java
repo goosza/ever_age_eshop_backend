@@ -1,23 +1,21 @@
 package com.everage.eshop.controller;
 
-import com.everage.eshop.dto.OrderDto;
-import com.everage.eshop.entity.OrderStatus;
-import com.everage.eshop.service.OrderService;
+import com.everage.eshop.dto.CheckoutSessionRequest;
+import com.everage.eshop.dto.CheckoutSessionResponse;
+import com.everage.eshop.service.stripe.StripeCheckoutService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,48 +29,39 @@ class CheckoutControllerTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private OrderService orderService;
+    private StripeCheckoutService stripeCheckoutService;
 
     @Test
-    void getOrderByNumber_ShouldReturn200WithOrder() throws Exception {
-        OrderDto orderDto = createOrderDto();
-
-        when(orderService.getOrderByNumber(anyString())).thenReturn(orderDto);
-
-        mockMvc.perform(get("/api/checkout/order/{orderNumber}", "ORD-123"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.orderNumber").value("ORD-123"));
-    }
-
-    @Test
-    void getOrdersByEmail_ShouldReturn200WithOrders() throws Exception {
-        OrderDto orderDto = createOrderDto();
-
-        when(orderService.getOrdersByEmail(anyString())).thenReturn(List.of(orderDto));
-
-        mockMvc.perform(get("/api/checkout/email/{email}", "test@example.com"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].orderNumber").value("ORD-123"));
-    }
-
-    private OrderDto createOrderDto() {
-        return new OrderDto(
-                UUID.randomUUID(),
-                "ORD-123",
+    void createCheckoutSession_ShouldReturn200WithSessionUrl() throws Exception {
+        // Given
+        CheckoutSessionRequest.CustomerInfo customerInfo = new CheckoutSessionRequest.CustomerInfo(
                 "John",
                 "Doe",
-                "test@example.com",
+                "john@example.com",
                 "+1234567890",
                 "123 Main St",
                 "New York",
                 "10001",
-                "USA",
-                List.of(),
-                BigDecimal.valueOf(110.00),
-                OrderStatus.PENDING,
-                "Please deliver after 5pm",
-                LocalDateTime.now(),
-                LocalDateTime.now()
+                "US"
         );
+
+        CheckoutSessionRequest.CheckoutItem checkoutItem = new CheckoutSessionRequest.CheckoutItem(
+                "123e4567-e89b-12d3-a456-426614174000",
+                2,
+                2999L
+        );
+
+        CheckoutSessionRequest request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem));
+        String mockSessionUrl = "https://checkout.stripe.com/pay/cs_test_123";
+
+        when(stripeCheckoutService.createCheckoutSession(any(CheckoutSessionRequest.class)))
+                .thenReturn(mockSessionUrl);
+
+        // When & Then
+        mockMvc.perform(post("/api/orders/checkout")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.sessionUrl").value(mockSessionUrl));
     }
 }

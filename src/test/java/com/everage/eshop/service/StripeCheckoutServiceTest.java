@@ -43,7 +43,7 @@ class StripeCheckoutServiceTest {
 
     @BeforeEach
     void setUp() {
-        ReflectionTestUtils.setField(stripeCheckoutService, "serverUrl", "http://localhost:8080");
+        ReflectionTestUtils.setField(stripeCheckoutService, "frontendUrl", "http://localhost:3000");
 
         itemId = UUID.randomUUID();
         item = new Item();
@@ -102,8 +102,8 @@ class StripeCheckoutServiceTest {
         verify(stripePaymentGateway).createCheckoutSession(
                 anyList(),
                 eq("john@example.com"),
-                eq("http://localhost:8080/checkout/success?session_id={CHECKOUT_SESSION_ID}"),
-                eq("http://localhost:8080/checkout/cancel"),
+                eq("http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}"),
+                eq("http://localhost:3000/checkout/cancel"),
                 any(),
                 anyList(),
                 anyList()
