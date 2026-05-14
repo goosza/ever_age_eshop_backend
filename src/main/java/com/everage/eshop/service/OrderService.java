@@ -110,6 +110,17 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
+    public OrderDto getOrderByStripeSessionId(String sessionId) {
+        log.info("Fetching order by Stripe session ID: {}", sessionId);
+
+        Order order = orderRepository.findByStripeSessionId(sessionId)
+                .orElseThrow(() -> new OrderNotFoundException("Order not found for session: " + sessionId));
+        
+        log.info("Found order: {} for session: {}", order.getOrderNumber(), sessionId);
+        return orderMapper.toDto(order);
+    }
+
+    @Transactional(readOnly = true)
     public List<OrderDto> getOrdersByEmail(String email) {
         log.info("Fetching orders for email: {}", email);
         List<OrderDto> orders = orderMapper.toDtoList(orderRepository.findByEmailOrderByCreatedAtDesc(email));

@@ -62,6 +62,10 @@ public class Order {
     @Column(nullable = false, length = 30)
     private OrderStatus status = OrderStatus.PENDING;
 
+    // Payment Information
+    @Column(name = "stripe_session_id", unique = true, length = 255)
+    private String stripeSessionId;
+
     // Notes
     @Column(name = "customer_notes", columnDefinition = "TEXT")
     private String customerNotes;

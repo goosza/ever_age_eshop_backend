@@ -12,5 +12,6 @@ import java.util.UUID;
 public interface OrderRepository extends BaseJpaRepository<Order, UUID> {
     Optional<Order> findByUuid(UUID id);
     Optional<Order> findByOrderNumber(String orderNumber);
+    Optional<Order> findByStripeSessionId(String stripeSessionId);
     List<Order> findByEmailOrderByCreatedAtDesc(String email);
 }
