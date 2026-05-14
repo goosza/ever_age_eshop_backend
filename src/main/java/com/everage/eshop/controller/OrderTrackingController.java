@@ -32,6 +32,16 @@ public class OrderTrackingController {
         return orderService.getOrderByNumber(orderNumber);
     }
 
+    @GetMapping("/by-session/{sessionId}")
+    @Operation(
+            summary = "Get order by Stripe session ID",
+            description = "Retrieve order details using Stripe checkout session ID. Used on success page to display order confirmation."
+    )
+    public OrderDto getOrderBySessionId(@PathVariable String sessionId) {
+        log.info("Fetching order for Stripe session: {}", sessionId);
+        return orderService.getOrderByStripeSessionId(sessionId);
+    }
+
     @GetMapping("/customer/{email}")
     @Operation(
             summary = "Get customer orders",

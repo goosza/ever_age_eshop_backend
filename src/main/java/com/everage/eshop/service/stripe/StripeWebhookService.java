@@ -89,6 +89,11 @@ public class StripeWebhookService {
         Order order = orderRepository.findByUuid(orderDto.uuid())
                 .orElseThrow(() -> new RuntimeException("Order not found after creation"));
 
+        // Save Stripe session ID
+        order.setStripeSessionId(session.getId());
+        orderRepository.persist(order);
+        log.info("Stripe session ID saved: {}", session.getId());
+
         // Create payment record
         Payment payment = new Payment();
         payment.setOrder(order);
