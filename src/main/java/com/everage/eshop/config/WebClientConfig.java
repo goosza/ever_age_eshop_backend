@@ -11,8 +11,9 @@ public class WebClientConfig {
     @Bean
     public WebClient zasilkovnaWebClient(ZasilkovnaConfig zasilkovnaConfig) {
         return WebClient.builder()
-                .baseUrl(zasilkovnaConfig.url())
-                .defaultHeader("Authorization", "Bearer " + zasilkovnaConfig.key())
+                .baseUrl(zasilkovnaConfig.getApi().getUrl())
+                .defaultHeader("X-API-Key", zasilkovnaConfig.getApi().getKey())
+                .defaultHeader("X-API-Password", zasilkovnaConfig.getApi().getPassword())
                 .defaultHeader("Content-Type", "application/json")
                 .build();
     }

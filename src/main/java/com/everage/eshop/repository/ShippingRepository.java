@@ -13,7 +13,7 @@ import java.util.UUID;
 @Repository
 public interface ShippingRepository extends BaseJpaRepository<Shipping, UUID> {
     Optional<Shipping> findByOrderUuid(UUID orderUuid);
+    Optional<Shipping> findByTrackingNumber(String trackingNumber);
     List<Shipping> findByStatus(ShippingStatus status);
     List<Shipping> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
-    List<Shipping> findByTrackingNumber(String trackingNumber);
 }

@@ -114,14 +114,27 @@ public class StripeWebhookService {
         // Create shipping
         ShippingRequest shippingRequest = new ShippingRequest(
                 order.getUuid(),
-                ShippingProvider.ZASILKOVNA, // Default provider, можно добавить в metadata
-                order.getAddress() + ", " + order.getCity() + ", " + order.getPostalCode() + ", " + order.getCountry()
+                ShippingProvider.ZASILKOVNA,
+                buildFullAddress(order),
+                new BigDecimal(metadata.getOrDefault("shipping_cost", "12.00")),
+                metadata.get("pickup_point_id"),
+                metadata.get("pickup_point_name"),
+                metadata.get("pickup_point_address")
         );
         
         var shippingDto = shippingService.createShipping(shippingRequest);
         log.info("Shipping created with tracking: {}", shippingDto.trackingNumber());
 
         log.info("Checkout session processing completed for order: {}", order.getOrderNumber());
+    }
+
+    private String buildFullAddress(Order order) {
+        return String.format("%s, %s, %s, %s",
+                order.getAddress(),
+                order.getCity(),
+                order.getPostalCode(),
+                order.getCountry()
+        );
     }
 
     @Transactional

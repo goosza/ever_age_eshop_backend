@@ -14,5 +14,10 @@ public record ShippingResponse(
         String trackingNumber,
         ShippingStatus status,
         LocalDateTime estimatedDelivery,
+        String pickupPointId,
+        String pickupPointName,
+        String pickupPointAddress,
+        String shipmentId,
+        String labelUrl,
         LocalDateTime createdAt
 ) {}

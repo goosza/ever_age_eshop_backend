@@ -5,12 +5,10 @@ import lombok.Getter;
 @Getter
 public enum ShippingStatus {
     PENDING("Pending"),
-    PICKED("Picked"),
-    SHIPPED("Shipped"),
+    CREATED("Created"),
     IN_TRANSIT("In Transit"),
-    OUT_FOR_DELIVERY("Out for Delivery"),
+    READY_FOR_PICKUP("Ready for Pickup"),
     DELIVERED("Delivered"),
-    FAILED("Failed"),
     RETURNED("Returned");
 
     private final String displayName;
