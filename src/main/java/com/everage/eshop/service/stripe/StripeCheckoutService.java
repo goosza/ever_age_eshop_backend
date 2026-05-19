@@ -97,6 +97,7 @@ public class StripeCheckoutService {
                 successUrl,
                 cancelUrl,
                 request.customerInfo(),
+                request.shippingInfo(),
                 productIds,
                 quantities
         );

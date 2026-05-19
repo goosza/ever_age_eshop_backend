@@ -11,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -51,7 +52,15 @@ class CheckoutControllerTest {
                 2999L
         );
 
-        CheckoutSessionRequest request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem));
+        CheckoutSessionRequest.ShippingInfo shippingInfo = new CheckoutSessionRequest.ShippingInfo(
+                "ZASILKOVNA",
+                BigDecimal.valueOf(12.00),
+                "12345",
+                "Zasilkovna Prague",
+                "Central Square 1"
+        );
+
+        CheckoutSessionRequest request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem), shippingInfo);
         String mockSessionUrl = "https://checkout.stripe.com/pay/cs_test_123";
 
         when(stripeCheckoutService.createCheckoutSession(any(CheckoutSessionRequest.class)))

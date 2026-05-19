@@ -59,6 +59,23 @@ public class Shipping {
     @Column(name = "estimated_delivery")
     private LocalDateTime estimatedDelivery;
 
+    // Zasilkovna pickup point fields
+    @Column(name = "pickup_point_id", length = 50)
+    private String pickupPointId;
+
+    @Column(name = "pickup_point_name", length = 255)
+    private String pickupPointName;
+
+    @Column(name = "pickup_point_address", columnDefinition = "TEXT")
+    private String pickupPointAddress;
+
+    // Zasilkovna shipment fields
+    @Column(name = "shipment_id", length = 100)
+    private String shipmentId;
+
+    @Column(name = "label_url", length = 500)
+    private String labelUrl;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

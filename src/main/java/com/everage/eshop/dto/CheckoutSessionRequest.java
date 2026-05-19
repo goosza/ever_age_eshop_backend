@@ -1,10 +1,12 @@
 package com.everage.eshop.dto;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public record CheckoutSessionRequest(
         CustomerInfo customerInfo,
-        List<CheckoutItem> items
+        List<CheckoutItem> items,
+        ShippingInfo shippingInfo
 ) {
     public record CustomerInfo(
             String firstName,
@@ -20,6 +22,14 @@ public record CheckoutSessionRequest(
     public record CheckoutItem(
             String productId,
             Integer quantity,
-            Long price  // в центах
+            Long price  // cents
+    ) {}
+    
+    public record ShippingInfo(
+            String provider,
+            BigDecimal cost,
+            String pickupPointId,
+            String pickupPointName,
+            String pickupPointAddress
     ) {}
 }

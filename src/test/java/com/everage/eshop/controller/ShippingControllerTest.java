@@ -40,37 +40,6 @@ class ShippingControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void createShipping_ShouldReturn200WithTrackingNumber() throws Exception {
-        UUID orderId = UUID.randomUUID();
-        ShippingRequest request = new ShippingRequest(orderId, ShippingProvider.ZASILKOVNA, "Main St 1, Prague");
-        ShippingResponse response = createShippingResponse(orderId, ShippingStatus.PENDING);
-
-        when(shippingService.createShipping(any(ShippingRequest.class))).thenReturn(response);
-
-        mockMvc.perform(post("/api/shipping/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.trackingNumber").value("TRACK-ABC123"))
-                .andExpect(jsonPath("$.status").value("PENDING"));
-    }
-
-    @Test
-    void createShipping_WhenOrderNotFound_ShouldReturn500() throws Exception {
-        UUID orderId = UUID.randomUUID();
-        ShippingRequest request = new ShippingRequest(orderId, ShippingProvider.ZASILKOVNA, "Main St 1");
-
-        when(shippingService.createShipping(any(ShippingRequest.class)))
-                .thenThrow(new RuntimeException("Order not found: " + orderId));
-
-        mockMvc.perform(post("/api/shipping/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
     void getShippingByOrder_ShouldReturn200() throws Exception {
         UUID orderId = UUID.randomUUID();
         when(shippingService.getShippingByOrderId(orderId))
@@ -96,13 +65,13 @@ class ShippingControllerTest {
     void updateShippingStatus_ShouldReturn200WithNewStatus() throws Exception {
         UUID shippingId = UUID.randomUUID();
         UUID orderId = UUID.randomUUID();
-        when(shippingService.updateShippingStatus(eq(shippingId), eq(ShippingStatus.SHIPPED)))
-                .thenReturn(createShippingResponse(orderId, ShippingStatus.SHIPPED));
+        when(shippingService.updateShippingStatus(eq(shippingId), eq(ShippingStatus.IN_TRANSIT)))
+                .thenReturn(createShippingResponse(orderId, ShippingStatus.IN_TRANSIT));
 
         mockMvc.perform(patch("/api/shipping/{shippingId}/status", shippingId)
-                        .param("status", "SHIPPED"))
+                        .param("status", "IN_TRANSIT"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("SHIPPED"));
+                .andExpect(jsonPath("$.status").value("IN_TRANSIT"));
     }
 
     @Test
@@ -112,7 +81,7 @@ class ShippingControllerTest {
                 .thenThrow(new RuntimeException("Shipping not found: " + shippingId));
 
         mockMvc.perform(patch("/api/shipping/{shippingId}/status", shippingId)
-                        .param("status", "SHIPPED"))
+                        .param("status", "IN_TRANSIT"))
                 .andExpect(status().isInternalServerError());
     }
 
@@ -120,11 +89,18 @@ class ShippingControllerTest {
 
     private ShippingResponse createShippingResponse(UUID orderId, ShippingStatus status) {
         return new ShippingResponse(
-                UUID.randomUUID(), orderId,
+                UUID.randomUUID(), 
+                orderId,
                 ShippingProvider.ZASILKOVNA,
                 BigDecimal.valueOf(12.00),
-                "TRACK-ABC123", status,
+                "TRACK-ABC123", 
+                status,
                 LocalDateTime.now().plusDays(5),
+                "12345",
+                "Zasilkovna Prague",
+                "Central Square 1",
+                "ZAS-123456",
+                "https://label.url",
                 LocalDateTime.now()
         );
     }

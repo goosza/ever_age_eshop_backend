@@ -27,6 +27,7 @@ public class StripePaymentGateway {
             String successUrl,
             String cancelUrl,
             CheckoutSessionRequest.CustomerInfo customerInfo,
+            CheckoutSessionRequest.ShippingInfo shippingInfo,
             List<String> productIds,
             List<Integer> quantities
     ) {
@@ -40,6 +41,18 @@ public class StripePaymentGateway {
             metadata.put("customer_city", customerInfo.city());
             metadata.put("customer_postal_code", customerInfo.postalCode());
             metadata.put("customer_country", customerInfo.country());
+            
+            // Store shipping information
+            if (shippingInfo != null) {
+                metadata.put("shipping_provider", shippingInfo.provider() != null ? shippingInfo.provider() : "ZASILKOVNA");
+                metadata.put("shipping_cost", shippingInfo.cost() != null ? shippingInfo.cost().toString() : "12.00");
+                
+                if (shippingInfo.pickupPointId() != null) {
+                    metadata.put("pickup_point_id", shippingInfo.pickupPointId());
+                    metadata.put("pickup_point_name", shippingInfo.pickupPointName());
+                    metadata.put("pickup_point_address", shippingInfo.pickupPointAddress());
+                }
+            }
             
             // Store cart items (product IDs and quantities)
             for (int i = 0; i < productIds.size(); i++) {

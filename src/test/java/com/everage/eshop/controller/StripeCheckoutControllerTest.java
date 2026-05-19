@@ -12,6 +12,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -53,7 +54,15 @@ class StripeCheckoutControllerTest {
                 2999L
         );
 
-        request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem));
+        CheckoutSessionRequest.ShippingInfo shippingInfo = new CheckoutSessionRequest.ShippingInfo(
+                "ZASILKOVNA",
+                BigDecimal.valueOf(12.00),
+                "12345",
+                "Zasilkovna Prague",
+                "Central Square 1"
+        );
+
+        request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem), shippingInfo);
     }
 
     @Test
@@ -103,7 +112,8 @@ class StripeCheckoutControllerTest {
         // Given
         CheckoutSessionRequest emptyRequest = new CheckoutSessionRequest(
                 request.customerInfo(),
-                List.of()
+                List.of(),
+                request.shippingInfo()
         );
 
         // When & Then
@@ -123,7 +133,8 @@ class StripeCheckoutControllerTest {
         );
         CheckoutSessionRequest multiItemRequest = new CheckoutSessionRequest(
                 request.customerInfo(),
-                List.of(request.items().get(0), item2)
+                List.of(request.items().get(0), item2),
+                request.shippingInfo()
         );
 
         String sessionUrl = "https://checkout.stripe.com/pay/cs_test_456";
