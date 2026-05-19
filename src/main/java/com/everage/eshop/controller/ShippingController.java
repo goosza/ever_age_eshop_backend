@@ -30,18 +30,16 @@ public class ShippingController {
 
     @GetMapping("/track/{trackingNumber}")
     @Operation(summary = "Track shipment by tracking number")
-    public ResponseEntity<ShippingResponse> trackShipment(@PathVariable String trackingNumber) {
+    public ShippingResponse trackShipment(@PathVariable String trackingNumber) {
         log.info("Tracking shipment: {}", trackingNumber);
-        ShippingResponse shipping = shippingService.getShippingByTracking(trackingNumber);
-        return ResponseEntity.ok(shipping);
+        return shippingService.getShippingByTracking(trackingNumber);
     }
 
     @GetMapping("/order/{orderUuid}")
     @Operation(summary = "Get shipping by order UUID")
-    public ResponseEntity<ShippingResponse> getShippingByOrder(@PathVariable UUID orderUuid) {
+    public ShippingResponse getShippingByOrder(@PathVariable UUID orderUuid) {
         log.info("Fetching shipping for order: {}", orderUuid);
-        ShippingResponse shipping = shippingService.getShippingByOrderId(orderUuid);
-        return ResponseEntity.ok(shipping);
+        return shippingService.getShippingByOrderId(orderUuid);
     }
 
     @GetMapping("/order/{orderUuid}/label")
@@ -50,7 +48,6 @@ public class ShippingController {
         log.info("Downloading shipping label for order: {}", orderUuid);
         
         byte[] labelPdf = shippingService.getShippingLabel(orderUuid);
-        
         ShippingResponse shipping = shippingService.getShippingByOrderId(orderUuid);
         String filename = "label-" + shipping.trackingNumber() + ".pdf";
         
@@ -62,12 +59,11 @@ public class ShippingController {
 
     @PatchMapping("/{shippingUuid}/status")
     @Operation(summary = "Update shipping status (Admin)")
-    public ResponseEntity<ShippingResponse> updateShippingStatus(
+    public ShippingResponse updateShippingStatus(
             @PathVariable UUID shippingUuid,
             @RequestParam ShippingStatus status
     ) {
         log.info("Updating shipping status: {} -> {}", shippingUuid, status);
-        ShippingResponse shipping = shippingService.updateShippingStatus(shippingUuid, status);
-        return ResponseEntity.ok(shipping);
+        return shippingService.updateShippingStatus(shippingUuid, status);
     }
 }

@@ -8,8 +8,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -28,7 +26,7 @@ public class ZasilkovnaWebhookController {
 
     @PostMapping("/webhook")
     @Operation(summary = "Receive webhook events from Zasilkovna")
-    public ResponseEntity<String> handleWebhook(
+    public String handleWebhook(
             @RequestBody ZasilkovnaWebhookEvent event,
             @RequestHeader(value = "X-Zasilkovna-Signature", required = false) String signature
     ) {
@@ -39,18 +37,17 @@ public class ZasilkovnaWebhookController {
         if (signature == null || signature.isEmpty()) {
             log.warn("Webhook received without signature");
             // In production, you might want to reject unsigned webhooks
-            // return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing signature");
+            // throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing signature");
         }
 
         try {
             // Process webhook event
             processWebhookEvent(event);
-            return ResponseEntity.ok("OK");
+            return "OK";
             
         } catch (Exception e) {
             log.error("Error processing Zasilkovna webhook: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error processing webhook: " + e.getMessage());
+            throw new RuntimeException("Error processing webhook: " + e.getMessage(), e);
         }
     }
 
