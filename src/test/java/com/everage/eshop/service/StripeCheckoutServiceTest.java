@@ -71,7 +71,15 @@ class StripeCheckoutServiceTest {
                 2999L // 29.99 EUR in cents
         );
 
-        request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem));
+        CheckoutSessionRequest.ShippingInfo shippingInfo = new CheckoutSessionRequest.ShippingInfo(
+                "ZASILKOVNA",
+                BigDecimal.valueOf(12.00),
+                "12345",
+                "Zasilkovna Prague",
+                "Central Square 1"
+        );
+
+        request = new CheckoutSessionRequest(customerInfo, List.of(checkoutItem), shippingInfo);
     }
 
     @Test
@@ -87,6 +95,7 @@ class StripeCheckoutServiceTest {
                 eq("john@example.com"),
                 anyString(),
                 anyString(),
+                any(),
                 any(),
                 anyList(),
                 anyList()
@@ -104,6 +113,7 @@ class StripeCheckoutServiceTest {
                 eq("john@example.com"),
                 eq("http://localhost:3000/checkout/success?session_id={CHECKOUT_SESSION_ID}"),
                 eq("http://localhost:3000/checkout/cancel"),
+                any(),
                 any(),
                 anyList(),
                 anyList()
@@ -130,7 +140,8 @@ class StripeCheckoutServiceTest {
 
         CheckoutSessionRequest multiItemRequest = new CheckoutSessionRequest(
                 request.customerInfo(),
-                List.of(request.items().get(0), checkoutItem2)
+                List.of(request.items().get(0), checkoutItem2),
+                request.shippingInfo()
         );
 
         Session mockSession = mock(Session.class);
@@ -138,7 +149,7 @@ class StripeCheckoutServiceTest {
 
         when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
         when(itemRepository.findById(itemId2)).thenReturn(Optional.of(item2));
-        when(stripePaymentGateway.createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), anyList(), anyList()))
+        when(stripePaymentGateway.createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList()))
                 .thenReturn(mockSession);
 
         // When
@@ -160,7 +171,7 @@ class StripeCheckoutServiceTest {
                 stripeCheckoutService.createCheckoutSession(request)
         );
         verify(itemRepository).findById(itemId);
-        verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), anyList(), anyList());
+        verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList());
     }
 
     @Test
@@ -175,7 +186,7 @@ class StripeCheckoutServiceTest {
         );
         assertTrue(exception.getMessage().contains("Insufficient stock"));
         verify(itemRepository).findById(itemId);
-        verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), anyList(), anyList());
+        verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList());
     }
 
     @Test
@@ -201,13 +212,14 @@ class StripeCheckoutServiceTest {
         );
         CheckoutSessionRequest invalidRequest = new CheckoutSessionRequest(
                 request.customerInfo(),
-                List.of(invalidItem)
+                List.of(invalidItem),
+                request.shippingInfo()
         );
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () ->
                 stripeCheckoutService.createCheckoutSession(invalidRequest)
         );
-        verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), anyList(), anyList());
+        verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList());
     }
 }

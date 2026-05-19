@@ -40,53 +40,6 @@ class ShippingControllerTest {
     private ObjectMapper objectMapper;
 
     @Test
-    void createShipping_ShouldReturn200WithTrackingNumber() throws Exception {
-        UUID orderId = UUID.randomUUID();
-        ShippingRequest request = new ShippingRequest(
-                orderId, 
-                ShippingProvider.ZASILKOVNA, 
-                "Main St 1, Prague",
-                BigDecimal.valueOf(12.00),
-                "12345",
-                "Zasilkovna Prague",
-                "Central Square 1"
-        );
-        ShippingResponse response = createShippingResponse(orderId, ShippingStatus.PENDING);
-
-        when(shippingService.createShipping(any(ShippingRequest.class))).thenReturn(response);
-
-        mockMvc.perform(post("/api/shipping/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.trackingNumber").value("TRACK-ABC123"))
-                .andExpect(jsonPath("$.status").value("PENDING"));
-    }
-
-    @Test
-    void createShipping_WhenOrderNotFound_ShouldReturn500() throws Exception {
-        UUID orderId = UUID.randomUUID();
-        ShippingRequest request = new ShippingRequest(
-                orderId, 
-                ShippingProvider.ZASILKOVNA, 
-                "Main St 1",
-                BigDecimal.valueOf(12.00),
-                null,
-                null,
-                null
-        );
-
-        when(shippingService.createShipping(any(ShippingRequest.class)))
-                .thenThrow(new RuntimeException("Order not found: " + orderId));
-
-        mockMvc.perform(post("/api/shipping/create")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isInternalServerError());
-    }
-
-    @Test
     void getShippingByOrder_ShouldReturn200() throws Exception {
         UUID orderId = UUID.randomUUID();
         when(shippingService.getShippingByOrderId(orderId))
