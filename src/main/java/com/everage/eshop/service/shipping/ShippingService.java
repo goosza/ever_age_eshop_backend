@@ -15,6 +15,7 @@ import com.everage.eshop.repository.OrderRepository;
 import com.everage.eshop.repository.ShippingRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,9 @@ public class ShippingService {
     private final ShippingMapper shippingMapper;
     private final ZasilkovnaShippingGateway zasilkovnaGateway;
     private final ZasilkovnaConfig zasilkovnaConfig;
+
+    @Value("${zasilkovna.enabled:false}")
+    private boolean zasilkovnaEnabled;
 
     @Transactional
     public ShippingResponse createShipping(ShippingRequest request) {
@@ -55,62 +59,71 @@ public class ShippingService {
 
         // Integrate with Zasilkovna API
         if (ShippingProvider.ZASILKOVNA.equals(request.provider())) {
-            try {
-                log.info("Creating Zasilkovna shipment for order: {}", order.getOrderNumber());
-                
-                // Build Zasilkovna API request
-                CreateShipmentRequest zasilkovnaRequest = 
-                    CreateShipmentRequest.builder()
-                        .orderId(order.getUuid().toString())
-                        .pickupPointId(request.pickupPointId())
-                        .recipient(CreateShipmentRequest.Recipient.builder()
-                            .name(order.getFirstName() + " " + order.getLastName())
-                            .email(order.getEmail())
-                            .phone(order.getPhone())
-                            .build())
-                        .sender(CreateShipmentRequest.Sender.builder()
-                            .id(zasilkovnaConfig.getSender().getId())
-                            .name(zasilkovnaConfig.getSender().getName())
-                            .email(zasilkovnaConfig.getSender().getEmail())
-                            .phone(zasilkovnaConfig.getSender().getPhone())
-                            .build())
-                        .parcel(CreateShipmentRequest.Parcel.builder()
-                            .weight(calculateWeight(order))
-                            .value(order.getTotalAmount().doubleValue())
-                            .dimensions(CreateShipmentRequest.Parcel.Dimensions.builder()
-                                .length(30)
-                                .width(20)
-                                .height(10)
+            if (zasilkovnaEnabled) {
+                try {
+                    log.info("Creating Zasilkovna shipment for order: {}", order.getOrderNumber());
+                    
+                    // Build Zasilkovna API request
+                    CreateShipmentRequest zasilkovnaRequest = 
+                        CreateShipmentRequest.builder()
+                            .orderId(order.getUuid().toString())
+                            .pickupPointId(request.pickupPointId())
+                            .recipient(CreateShipmentRequest.Recipient.builder()
+                                .name(order.getFirstName() + " " + order.getLastName())
+                                .email(order.getEmail())
+                                .phone(order.getPhone())
                                 .build())
-                            .build())
-                        .payment(CreateShipmentRequest.Payment.builder()
-                            .method("prepaid")  // Already paid via Stripe
-                            .amount(0.0)
-                            .build())
-                        .build();
+                            .sender(CreateShipmentRequest.Sender.builder()
+                                .id(zasilkovnaConfig.getSender().getId())
+                                .name(zasilkovnaConfig.getSender().getName())
+                                .email(zasilkovnaConfig.getSender().getEmail())
+                                .phone(zasilkovnaConfig.getSender().getPhone())
+                                .build())
+                            .parcel(CreateShipmentRequest.Parcel.builder()
+                                .weight(calculateWeight(order))
+                                .value(order.getTotalAmount().doubleValue())
+                                .dimensions(CreateShipmentRequest.Parcel.Dimensions.builder()
+                                    .length(30)
+                                    .width(20)
+                                    .height(10)
+                                    .build())
+                                .build())
+                            .payment(CreateShipmentRequest.Payment.builder()
+                                .method("prepaid")  // Already paid via Stripe
+                                .amount(0.0)
+                                .build())
+                            .build();
 
-                // Call Zasilkovna API
-                CreateShipmentResponse zasilkovnaResponse = 
-                    zasilkovnaGateway.createShipment(zasilkovnaRequest);
+                    // Call Zasilkovna API
+                    CreateShipmentResponse zasilkovnaResponse = 
+                        zasilkovnaGateway.createShipment(zasilkovnaRequest);
 
-                // Save Zasilkovna response data
-                shipping.setTrackingNumber(zasilkovnaResponse.getTrackingNumber());
-                shipping.setShipmentId(zasilkovnaResponse.getShipmentId());
-                shipping.setLabelUrl(zasilkovnaResponse.getLabelUrl());
-                shipping.setEstimatedDelivery(zasilkovnaResponse.getEstimatedDelivery());
-                shipping.setStatus(ShippingStatus.CREATED);
+                    // Save Zasilkovna response data
+                    shipping.setTrackingNumber(zasilkovnaResponse.getTrackingNumber());
+                    shipping.setShipmentId(zasilkovnaResponse.getShipmentId());
+                    shipping.setLabelUrl(zasilkovnaResponse.getLabelUrl());
+                    shipping.setEstimatedDelivery(zasilkovnaResponse.getEstimatedDelivery());
+                    shipping.setStatus(ShippingStatus.CREATED);
 
-                log.info("Zasilkovna shipment created successfully: {}", zasilkovnaResponse.getTrackingNumber());
+                    log.info("Zasilkovna shipment created successfully: {}", zasilkovnaResponse.getTrackingNumber());
 
-            } catch (Exception e) {
-                log.error("Failed to create Zasilkovna shipment: {}", e.getMessage(), e);
-                
-                // Fallback: generate tracking number and set status to PENDING for retry
+                } catch (Exception e) {
+                    log.error("Failed to create Zasilkovna shipment: {}", e.getMessage(), e);
+                    
+                    // Fallback: generate tracking number and set status to PENDING for retry
+                    shipping.setTrackingNumber(generateFallbackTrackingNumber());
+                    shipping.setEstimatedDelivery(LocalDateTime.now().plusDays(4));
+                    shipping.setStatus(ShippingStatus.PENDING);
+                    
+                    log.warn("Using fallback tracking number: {}", shipping.getTrackingNumber());
+                }
+            } else {
+                // Zasilkovna disabled - use mock data for development/testing
+                log.info("Zasilkovna integration disabled - using mock tracking number");
                 shipping.setTrackingNumber(generateFallbackTrackingNumber());
                 shipping.setEstimatedDelivery(LocalDateTime.now().plusDays(4));
                 shipping.setStatus(ShippingStatus.PENDING);
-                
-                log.warn("Using fallback tracking number: {}", shipping.getTrackingNumber());
+                log.info("Mock tracking number generated: {}", shipping.getTrackingNumber());
             }
         } else {
             // For other providers (future implementation)
