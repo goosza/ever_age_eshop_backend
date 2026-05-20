@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -206,12 +207,23 @@ public class ShippingService {
 
     /**
      * Calculate parcel weight based on order items
-     * Default: 1.0 kg (can be customized based on actual product weights)
+     * Sums up weight of all items considering their quantities
      */
     private Double calculateWeight(Order order) {
-        // TODO: Calculate actual weight from order items
-        // For now, return default weight
-        return 1.0;
+        if (order.getItems() == null || order.getItems().isEmpty()) {
+            return 0.5; // Default minimum weight
+        }
+        
+        double totalWeight = order.getItems().stream()
+                .mapToDouble(orderItem -> {
+                    BigDecimal itemWeight = orderItem.getItem().getWeight();
+                    int quantity = orderItem.getQuantity();
+                    return itemWeight.doubleValue() * quantity;
+                })
+                .sum();
+        
+        // Ensure minimum weight of 0.1 kg
+        return Math.max(0.1, totalWeight);
     }
 
     /**

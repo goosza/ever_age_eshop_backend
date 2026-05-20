@@ -137,7 +137,7 @@ class ItemServiceTest {
         Item item = createItem();
         ItemRequest request = new ItemRequest(
                 "Test Item", "Description", BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE, 10, "red", List.of("url1")
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, "red", List.of("url1")
         );
         ItemDto resultDto = createItemDto();
 
@@ -164,7 +164,7 @@ class ItemServiceTest {
 
         ItemRequest request = new ItemRequest(
                 "Test Item", "Description", BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE, 10, "red", List.of("items/keep.jpg")
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, "red", List.of("items/keep.jpg")
         );
 
         when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
@@ -321,7 +321,7 @@ class ItemServiceTest {
 
     private ItemRequest createItemRequest(int quantity, ItemStatus status) {
         return new ItemRequest("Test Item", "Description", BigDecimal.valueOf(19.99),
-                status, quantity, "red", List.of("url1"));
+                BigDecimal.valueOf(0.500), status, quantity, "red", List.of("url1"));
     }
 
     private Item createItem() {
@@ -330,6 +330,7 @@ class ItemServiceTest {
         item.setName("Test Item");
         item.setDescription("Description");
         item.setPrice(BigDecimal.valueOf(19.99));
+        item.setWeight(BigDecimal.valueOf(0.500));
         item.setQuantity(10);
         item.setStatus(ItemStatus.ACTIVE);
         item.setColor("red");
@@ -353,6 +354,7 @@ class ItemServiceTest {
                 "Description",
                 List.of("url1"),
                 BigDecimal.valueOf(19.99),
+                BigDecimal.valueOf(0.500),
                 ItemStatus.ACTIVE,
                 10,
                 "red",

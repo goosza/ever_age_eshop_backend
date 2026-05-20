@@ -298,6 +298,7 @@ class CollectionServiceTest {
         item.setUuid(UUID.randomUUID());
         item.setName("Test Item");
         item.setPrice(BigDecimal.valueOf(99.99));
+        item.setWeight(BigDecimal.valueOf(0.500));
         item.setQuantity(10);
         item.setStatus(ItemStatus.ACTIVE);
         item.setImageUrls(new ArrayList<>());
@@ -315,7 +316,7 @@ class CollectionServiceTest {
     private ItemDto createItemDto() {
         return new ItemDto(
                 UUID.randomUUID(), "Test Item", "Desc",
-                List.of(), BigDecimal.valueOf(99.99),
+                List.of(), BigDecimal.valueOf(99.99), BigDecimal.valueOf(0.500),
                 ItemStatus.ACTIVE, 10, null, null
         );
     }

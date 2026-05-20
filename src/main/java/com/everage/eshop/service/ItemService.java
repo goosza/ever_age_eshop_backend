@@ -190,7 +190,7 @@ public class ItemService {
         return new ItemDto(
                 dto.uuid(), dto.name(), dto.description(),
                 storageService.toPublicUrls(dto.imageUrls()),
-                dto.price(), dto.status(), dto.quantity(), dto.color(),
+                dto.price(), dto.weight(), dto.status(), dto.quantity(), dto.color(),
                 dto.collection()
         );
     }

@@ -38,6 +38,8 @@ public class Item {
     private List<String> imageUrls = new ArrayList<>();
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+    @Column(nullable = false, precision = 6, scale = 3)
+    private BigDecimal weight = BigDecimal.valueOf(0.500); // Weight in kg
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private ItemStatus status = ItemStatus.ACTIVE;
