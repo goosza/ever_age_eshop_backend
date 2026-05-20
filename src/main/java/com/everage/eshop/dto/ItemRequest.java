@@ -18,6 +18,9 @@ public record ItemRequest(
         @Schema(description = "Item price", example = "1299.99", required = true)
         BigDecimal price,
 
+        @Schema(description = "Item weight in kilograms", example = "0.500", required = true)
+        BigDecimal weight,
+
         @Schema(description = "Item status", example = "ACTIVE", required = true)
         ItemStatus status,
 

@@ -86,7 +86,7 @@ class ItemControllerTest {
     void addItem_WithValidData_ShouldCreateItem() throws Exception {
         ItemRequest request = new ItemRequest(
                 "New Item", "Description", BigDecimal.valueOf(29.99),
-                ItemStatus.ACTIVE, 10, "black", null
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, "black", null
         );
         when(itemService.createItem(any(ItemRequest.class), any())).thenReturn(createItemDto());
 
@@ -101,7 +101,7 @@ class ItemControllerTest {
     void addItem_WithDuplicateName_ShouldReturn409() throws Exception {
         ItemRequest request = new ItemRequest(
                 "Existing Item", "Description", BigDecimal.valueOf(29.99),
-                ItemStatus.ACTIVE, 10, null, null
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, null, null
         );
         when(itemService.createItem(any(ItemRequest.class), any()))
                 .thenThrow(new ItemAlreadyExistsException("Item already exists"));
@@ -116,7 +116,7 @@ class ItemControllerTest {
     void addItem_WithInvalidStatus_ShouldReturn400() throws Exception {
         ItemRequest request = new ItemRequest(
                 "New Item", "Description", BigDecimal.valueOf(29.99),
-                ItemStatus.ACTIVE, 0, null, null
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 0, null, null
         );
         when(itemService.createItem(any(ItemRequest.class), any()))
                 .thenThrow(new InvalidItemStatusException("Invalid status"));
@@ -132,7 +132,7 @@ class ItemControllerTest {
         UUID uuid = UUID.randomUUID();
         ItemRequest request = new ItemRequest(
                 "Updated Item", "Updated Description", BigDecimal.valueOf(39.99),
-                ItemStatus.ACTIVE, 15, "blue", List.of("url1")
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 15, "blue", List.of("url1")
         );
         when(itemService.updateItem(eq(uuid), any(ItemRequest.class), any())).thenReturn(createItemDto());
 
@@ -148,7 +148,7 @@ class ItemControllerTest {
         UUID uuid = UUID.randomUUID();
         ItemRequest request = new ItemRequest(
                 "Test Item", "Description", BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE, 10, "red", List.of("url1")
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, "red", List.of("url1")
         );
         when(itemService.updateItem(eq(uuid), any(ItemRequest.class), any()))
                 .thenThrow(new ItemNotFoundException("Item not found with uuid: " + uuid));
@@ -164,7 +164,7 @@ class ItemControllerTest {
         UUID uuid = UUID.randomUUID();
         ItemRequest request = new ItemRequest(
                 "Test Item", "Description", BigDecimal.valueOf(19.99),
-                ItemStatus.ACTIVE, 10, "red", List.of("url1")
+                BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, "red", List.of("url1")
         );
         when(itemService.updateItem(eq(uuid), any(ItemRequest.class), any()))
                 .thenThrow(new ItemAlreadyExistsException("Name already taken"));
@@ -237,6 +237,7 @@ class ItemControllerTest {
                 "Test Description",
                 List.of("url1"),
                 BigDecimal.valueOf(19.99),
+                BigDecimal.valueOf(0.500),
                 ItemStatus.ACTIVE,
                 10,
                 "red",

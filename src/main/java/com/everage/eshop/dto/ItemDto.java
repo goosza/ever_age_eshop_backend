@@ -45,6 +45,12 @@ public record ItemDto(
                 minimum = "0")
         BigDecimal price,
 
+        @Schema(description = "Item weight in kilograms",
+                example = "0.500",
+                required = true,
+                minimum = "0.001")
+        BigDecimal weight,
+
         @Schema(description = "Item status (availability)",
                 example = "ACTIVE",
                 required = true,
