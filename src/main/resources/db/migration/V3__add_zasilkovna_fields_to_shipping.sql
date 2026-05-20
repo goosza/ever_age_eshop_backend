@@ -10,6 +10,6 @@ ALTER TABLE shippings ADD COLUMN shipment_id VARCHAR(100);
 ALTER TABLE shippings ADD COLUMN label_url VARCHAR(500);
 
 -- Indexes for efficient queries
-CREATE INDEX idx_shippings_pickup_point ON shippings(pickup_point_id);
-CREATE INDEX idx_shippings_shipment_id ON shippings(shipment_id);
-CREATE INDEX idx_shippings_tracking_number ON shippings(tracking_number);
+CREATE INDEX IF NOT EXISTS idx_shippings_pickup_point ON shippings(pickup_point_id);
+CREATE INDEX IF NOT EXISTS idx_shippings_shipment_id ON shippings(shipment_id);
+-- Note: idx_shippings_tracking_number already exists from V1 migration
