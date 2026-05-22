@@ -1,6 +1,6 @@
 package com.everage.eshop.service;
 
-import com.everage.eshop.dto.CheckoutRequest;
+import com.everage.eshop.dto.CreateOrderRequest;
 import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.dto.OrderItemRequest;
 import com.everage.eshop.entity.Item;
@@ -32,7 +32,7 @@ public class OrderService {
     private final OrderMapper orderMapper;
 
     @Transactional
-    public OrderDto createOrder(CheckoutRequest request) {
+    public OrderDto createOrder(CreateOrderRequest request) {
         log.info("Creating order for email: {}", request.email());
 
         // Validate all items exist and have stock

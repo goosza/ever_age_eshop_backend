@@ -1,6 +1,7 @@
 package com.everage.eshop.service.stripe;
 
-import com.everage.eshop.dto.CheckoutRequest;
+import com.everage.eshop.dto.CreateOrderRequest;
+import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.dto.OrderItemRequest;
 import com.everage.eshop.dto.ShippingRequest;
 import com.everage.eshop.entity.Order;
@@ -80,8 +81,7 @@ public class StripeWebhookService {
         // In production, you might want to store order data in session metadata
         
         // Create order
-        CheckoutRequest checkoutRequest = buildCheckoutRequestFromSession(session, firstName, lastName, email);
-        var orderDto = orderService.createOrder(checkoutRequest);
+        var orderDto = createOrderFromSession(session, firstName, lastName, email);
         
         log.info("Order created: {}", orderDto.orderNumber());
 
@@ -169,7 +169,7 @@ public class StripeWebhookService {
         // Optionally: restore cart items to inventory if they were reserved
     }
 
-    private CheckoutRequest buildCheckoutRequestFromSession(Session session, String firstName, String lastName, String email) {
+    private OrderDto createOrderFromSession(Session session, String firstName, String lastName, String email) {
         Map<String, String> metadata = session.getMetadata();
         
         // Extract customer info from metadata (collected on frontend)
@@ -194,7 +194,8 @@ public class StripeWebhookService {
 
         log.info("Extracted {} items from session metadata", items.size());
 
-        return new CheckoutRequest(
+        // Create order request
+        CreateOrderRequest request = new CreateOrderRequest(
                 firstName,
                 lastName,
                 email,
@@ -206,5 +207,7 @@ public class StripeWebhookService {
                 items,
                 null // customer notes
         );
+
+        return orderService.createOrder(request);
     }
 }
