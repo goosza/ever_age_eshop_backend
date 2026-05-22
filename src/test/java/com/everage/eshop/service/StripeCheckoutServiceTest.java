@@ -73,6 +73,7 @@ class StripeCheckoutServiceTest {
 
         CheckoutSessionRequest.ShippingInfo shippingInfo = new CheckoutSessionRequest.ShippingInfo(
                 "ZASILKOVNA",
+                "PICKUP",
                 BigDecimal.valueOf(12.00),
                 "12345",
                 "Zasilkovna Prague",

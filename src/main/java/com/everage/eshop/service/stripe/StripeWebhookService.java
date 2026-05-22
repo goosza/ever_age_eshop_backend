@@ -112,10 +112,22 @@ public class StripeWebhookService {
         log.info("Order status updated to CONFIRMED");
 
         // Create shipping
+        String shippingMethod = metadata.getOrDefault("shipping_method", "PICKUP");
+        String deliveryAddress;
+        
+        // Determine delivery address based on shipping method
+        if ("HOME".equals(shippingMethod)) {
+            // For home delivery - use customer address from metadata
+            deliveryAddress = buildFullAddress(order);
+        } else {
+            // For pickup methods - use pickup point address
+            deliveryAddress = metadata.getOrDefault("pickup_point_address", "Pickup Point");
+        }
+        
         ShippingRequest shippingRequest = new ShippingRequest(
                 order.getUuid(),
                 ShippingProvider.ZASILKOVNA,
-                buildFullAddress(order),
+                deliveryAddress,
                 new BigDecimal(metadata.getOrDefault("shipping_cost", "12.00")),
                 metadata.get("pickup_point_id"),
                 metadata.get("pickup_point_name"),
@@ -162,10 +174,12 @@ public class StripeWebhookService {
         
         // Extract customer info from metadata (collected on frontend)
         String phone = metadata.getOrDefault("customer_phone", "");
-        String addressLine = metadata.getOrDefault("customer_address", "");
-        String city = metadata.getOrDefault("customer_city", "");
-        String postalCode = metadata.getOrDefault("customer_postal_code", "");
         String country = metadata.getOrDefault("customer_country", "");
+        
+        // Address fields - may be null for pickup methods
+        String addressLine = metadata.get("customer_address");
+        String city = metadata.get("customer_city");
+        String postalCode = metadata.get("customer_postal_code");
 
         // Extract cart items from metadata
         List<OrderItemRequest> items = new ArrayList<>();

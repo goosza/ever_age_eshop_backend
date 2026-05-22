@@ -31,11 +31,7 @@ public class ShippingService {
     private final ShippingRepository shippingRepository;
     private final OrderRepository orderRepository;
     private final ShippingMapper shippingMapper;
-    private final ZasilkovnaShippingGateway zasilkovnaGateway;
-    private final ZasilkovnaConfig zasilkovnaConfig;
-
-    @Value("${zasilkovna.enabled:false}")
-    private boolean zasilkovnaEnabled;
+    private final ShippingGatewayFactory gatewayFactory;
 
     @Transactional
     public ShippingResponse createShipping(ShippingRequest request) {
@@ -58,78 +54,25 @@ public class ShippingService {
             shipping.setPickupPointAddress(request.pickupPointAddress());
         }
 
-        // Integrate with Zasilkovna API
-        if (ShippingProvider.ZASILKOVNA.equals(request.provider())) {
-            if (zasilkovnaEnabled) {
-                try {
-                    log.info("Creating Zasilkovna shipment for order: {}", order.getOrderNumber());
-                    
-                    // Build Zasilkovna API request
-                    CreateShipmentRequest zasilkovnaRequest = 
-                        CreateShipmentRequest.builder()
-                            .orderId(order.getUuid().toString())
-                            .pickupPointId(request.pickupPointId())
-                            .recipient(CreateShipmentRequest.Recipient.builder()
-                                .name(order.getFirstName() + " " + order.getLastName())
-                                .email(order.getEmail())
-                                .phone(order.getPhone())
-                                .build())
-                            .sender(CreateShipmentRequest.Sender.builder()
-                                .id(zasilkovnaConfig.getSender().getId())
-                                .name(zasilkovnaConfig.getSender().getName())
-                                .email(zasilkovnaConfig.getSender().getEmail())
-                                .phone(zasilkovnaConfig.getSender().getPhone())
-                                .build())
-                            .parcel(CreateShipmentRequest.Parcel.builder()
-                                .weight(calculateWeight(order))
-                                .value(order.getTotalAmount().doubleValue())
-                                .dimensions(CreateShipmentRequest.Parcel.Dimensions.builder()
-                                    .length(30)
-                                    .width(20)
-                                    .height(10)
-                                    .build())
-                                .build())
-                            .payment(CreateShipmentRequest.Payment.builder()
-                                .method("prepaid")  // Already paid via Stripe
-                                .amount(0.0)
-                                .build())
-                            .build();
-
-                    // Call Zasilkovna API
-                    CreateShipmentResponse zasilkovnaResponse = 
-                        zasilkovnaGateway.createShipment(zasilkovnaRequest);
-
-                    // Save Zasilkovna response data
-                    shipping.setTrackingNumber(zasilkovnaResponse.getTrackingNumber());
-                    shipping.setShipmentId(zasilkovnaResponse.getShipmentId());
-                    shipping.setLabelUrl(zasilkovnaResponse.getLabelUrl());
-                    shipping.setEstimatedDelivery(zasilkovnaResponse.getEstimatedDelivery());
-                    shipping.setStatus(ShippingStatus.CREATED);
-
-                    log.info("Zasilkovna shipment created successfully: {}", zasilkovnaResponse.getTrackingNumber());
-
-                } catch (Exception e) {
-                    log.error("Failed to create Zasilkovna shipment: {}", e.getMessage(), e);
-                    
-                    // Fallback: generate tracking number and set status to PENDING for retry
-                    shipping.setTrackingNumber(generateFallbackTrackingNumber());
-                    shipping.setEstimatedDelivery(LocalDateTime.now().plusDays(4));
-                    shipping.setStatus(ShippingStatus.PENDING);
-                    
-                    log.warn("Using fallback tracking number: {}", shipping.getTrackingNumber());
-                }
+        // Integrate with shipping provider using factory pattern
+        try {
+            ShippingGateway gateway = gatewayFactory.getGateway(request.provider());
+            
+            if (gateway.isEnabled()) {
+                log.info("Creating shipment with provider: {}", request.provider());
+                shipping = gateway.createShipment(order, shipping);
             } else {
-                // Zasilkovna disabled - use mock data for development/testing
-                log.info("Zasilkovna integration disabled - using mock tracking number");
+                log.info("{} integration disabled - using mock tracking number", request.provider());
                 shipping.setTrackingNumber(generateFallbackTrackingNumber());
                 shipping.setEstimatedDelivery(LocalDateTime.now().plusDays(4));
                 shipping.setStatus(ShippingStatus.PENDING);
-                log.info("Mock tracking number generated: {}", shipping.getTrackingNumber());
             }
-        } else {
-            // For other providers (future implementation)
+        } catch (IllegalArgumentException e) {
+            // Provider not supported - use fallback
+            log.warn("Shipping provider not supported: {} - using fallback", request.provider());
             shipping.setTrackingNumber(generateFallbackTrackingNumber());
             shipping.setEstimatedDelivery(LocalDateTime.now().plusDays(5));
+            shipping.setStatus(ShippingStatus.PENDING);
         }
 
         shipping = shippingRepository.persist(shipping);
@@ -198,32 +141,12 @@ public class ShippingService {
         }
 
         try {
-            return zasilkovnaGateway.getShippingLabel(shipping.getTrackingNumber());
+            ShippingGateway gateway = gatewayFactory.getGateway(shipping.getProvider());
+            return gateway.getShippingLabel(shipping.getTrackingNumber());
         } catch (Exception e) {
             log.error("Failed to fetch shipping label: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to fetch shipping label: " + e.getMessage(), e);
         }
-    }
-
-    /**
-     * Calculate parcel weight based on order items
-     * Sums up weight of all items considering their quantities
-     */
-    private Double calculateWeight(Order order) {
-        if (order.getItems() == null || order.getItems().isEmpty()) {
-            return 0.5; // Default minimum weight
-        }
-        
-        double totalWeight = order.getItems().stream()
-                .mapToDouble(orderItem -> {
-                    BigDecimal itemWeight = orderItem.getItem().getWeight();
-                    int quantity = orderItem.getQuantity();
-                    return itemWeight.doubleValue() * quantity;
-                })
-                .sum();
-        
-        // Ensure minimum weight of 0.1 kg
-        return Math.max(0.1, totalWeight);
     }
 
     /**

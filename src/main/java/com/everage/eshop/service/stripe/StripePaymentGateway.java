@@ -37,16 +37,22 @@ public class StripePaymentGateway {
             metadata.put("customer_first_name", customerInfo.firstName());
             metadata.put("customer_last_name", customerInfo.lastName());
             metadata.put("customer_phone", customerInfo.phone() != null ? customerInfo.phone() : "");
-            metadata.put("customer_address", customerInfo.address());
-            metadata.put("customer_city", customerInfo.city());
-            metadata.put("customer_postal_code", customerInfo.postalCode());
             metadata.put("customer_country", customerInfo.country());
+            
+            // Address fields - only for HOME delivery
+            if (customerInfo.address() != null) {
+                metadata.put("customer_address", customerInfo.address());
+                metadata.put("customer_city", customerInfo.city());
+                metadata.put("customer_postal_code", customerInfo.postalCode());
+            }
             
             // Store shipping information
             if (shippingInfo != null) {
                 metadata.put("shipping_provider", shippingInfo.provider() != null ? shippingInfo.provider() : "ZASILKOVNA");
+                metadata.put("shipping_method", shippingInfo.method() != null ? shippingInfo.method() : "PICKUP");
                 metadata.put("shipping_cost", shippingInfo.cost() != null ? shippingInfo.cost().toString() : "12.00");
                 
+                // Pickup point info - for PICKUP, ZBOX, CARRIER_PICKUP methods
                 if (shippingInfo.pickupPointId() != null) {
                     metadata.put("pickup_point_id", shippingInfo.pickupPointId());
                     metadata.put("pickup_point_name", shippingInfo.pickupPointName());

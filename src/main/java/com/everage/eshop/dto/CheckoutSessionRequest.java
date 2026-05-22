@@ -13,10 +13,11 @@ public record CheckoutSessionRequest(
             String lastName,
             String email,
             String phone,
+            String country,
+            // Optional - only for HOME delivery
             String address,
             String city,
-            String postalCode,
-            String country
+            String postalCode
     ) {}
 
     public record CheckoutItem(
@@ -26,8 +27,10 @@ public record CheckoutSessionRequest(
     ) {}
     
     public record ShippingInfo(
-            String provider,
+            String provider,      // "ZASILKOVNA", "OTHER"
+            String method,        // "PICKUP", "ZBOX", "HOME", "CARRIER_PICKUP", "STANDARD"
             BigDecimal cost,
+            // For pickup methods (PICKUP, ZBOX, CARRIER_PICKUP)
             String pickupPointId,
             String pickupPointName,
             String pickupPointAddress

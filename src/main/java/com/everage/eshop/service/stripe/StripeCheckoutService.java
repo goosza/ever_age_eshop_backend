@@ -35,6 +35,9 @@ public class StripeCheckoutService {
     public String createCheckoutSession(CheckoutSessionRequest request) {
         log.info("Creating Stripe Checkout Session for: {}", request.customerInfo().email());
 
+        // Validate shipping method and required fields
+        validateCheckoutRequest(request);
+
         // Validate items and build line items
         List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
         List<String> productIds = new ArrayList<>();
@@ -104,5 +107,53 @@ public class StripeCheckoutService {
 
         log.info("Checkout Session created: {}", session.getId());
         return session.getUrl();
+    }
+
+    /**
+     * Validate checkout request based on shipping method
+     */
+    private void validateCheckoutRequest(CheckoutSessionRequest request) {
+        CheckoutSessionRequest.CustomerInfo customer = request.customerInfo();
+        CheckoutSessionRequest.ShippingInfo shipping = request.shippingInfo();
+
+        // Basic validation
+        if (customer.firstName() == null || customer.firstName().isBlank()) {
+            throw new IllegalArgumentException("First name is required");
+        }
+        if (customer.email() == null || customer.email().isBlank()) {
+            throw new IllegalArgumentException("Email is required");
+        }
+        if (customer.country() == null || customer.country().isBlank()) {
+            throw new IllegalArgumentException("Country is required");
+        }
+
+        // Shipping method validation
+        if (shipping == null || shipping.method() == null) {
+            throw new IllegalArgumentException("Shipping method is required");
+        }
+
+        String method = shipping.method();
+
+        // Validation for HOME delivery
+        if ("HOME".equals(method)) {
+            if (customer.address() == null || customer.address().isBlank()) {
+                throw new IllegalArgumentException("Address is required for home delivery");
+            }
+            if (customer.city() == null || customer.city().isBlank()) {
+                throw new IllegalArgumentException("City is required for home delivery");
+            }
+            if (customer.postalCode() == null || customer.postalCode().isBlank()) {
+                throw new IllegalArgumentException("Postal code is required for home delivery");
+            }
+        }
+
+        // Validation for pickup methods (PICKUP, ZBOX, CARRIER_PICKUP)
+        if ("PICKUP".equals(method) || "ZBOX".equals(method) || "CARRIER_PICKUP".equals(method)) {
+            if (shipping.pickupPointId() == null || shipping.pickupPointId().isBlank()) {
+                throw new IllegalArgumentException("Pickup point is required for " + method + " delivery");
+            }
+        }
+
+        log.debug("Checkout request validation passed for method: {}", method);
     }
 }
