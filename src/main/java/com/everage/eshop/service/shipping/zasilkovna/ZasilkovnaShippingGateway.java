@@ -1,4 +1,4 @@
-package com.everage.eshop.service.shipping;
+package com.everage.eshop.service.shipping.zasilkovna;
 
 import com.everage.eshop.config.ZasilkovnaConfig;
 import com.everage.eshop.dto.zasilkovna.CreateShipmentRequest;

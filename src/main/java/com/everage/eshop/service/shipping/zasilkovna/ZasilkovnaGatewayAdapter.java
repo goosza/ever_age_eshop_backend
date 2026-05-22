@@ -1,4 +1,4 @@
-package com.everage.eshop.service.shipping;
+package com.everage.eshop.service.shipping.zasilkovna;
 
 import com.everage.eshop.config.ZasilkovnaConfig;
 import com.everage.eshop.dto.zasilkovna.CreateShipmentRequest;
@@ -7,6 +7,7 @@ import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.Shipping;
 import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.entity.ShippingStatus;
+import com.everage.eshop.service.shipping.ShippingGateway;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

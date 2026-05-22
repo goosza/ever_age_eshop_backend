@@ -1,6 +1,7 @@
-package com.everage.eshop.service.shipping;
+package com.everage.eshop.service.shipping.zasilkovna;
 
 import com.everage.eshop.entity.ShippingStatus;
+import com.everage.eshop.service.shipping.ShippingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

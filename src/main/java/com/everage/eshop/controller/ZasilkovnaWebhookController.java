@@ -2,7 +2,7 @@ package com.everage.eshop.controller;
 
 import com.everage.eshop.config.ZasilkovnaConfig;
 import com.everage.eshop.dto.ZasilkovnaWebhookEvent;
-import com.everage.eshop.service.shipping.ZasilkovnaWebhookService;
+import com.everage.eshop.service.shipping.zasilkovna.ZasilkovnaWebhookService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
