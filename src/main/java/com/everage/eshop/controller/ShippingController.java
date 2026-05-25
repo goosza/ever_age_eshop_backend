@@ -1,5 +1,6 @@
 package com.everage.eshop.controller;
 
+import com.everage.eshop.dto.ShippingOptionsResponse;
 import com.everage.eshop.dto.ShippingResponse;
 import com.everage.eshop.entity.ShippingStatus;
 import com.everage.eshop.service.shipping.ShippingService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.UUID;
 
 @RestController
@@ -27,6 +29,16 @@ import java.util.UUID;
 public class ShippingController {
 
     private final ShippingService shippingService;
+
+    @GetMapping("/options")
+    @Operation(summary = "Get available shipping methods and their costs")
+    public ShippingOptionsResponse getShippingOptions(
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) BigDecimal orderTotal
+    ) {
+        log.info("Fetching shipping options for country: {}, orderTotal: {}", country, orderTotal);
+        return shippingService.getShippingOptions(country, orderTotal);
+    }
 
     @GetMapping("/track/{trackingNumber}")
     @Operation(summary = "Track shipment by tracking number")
