@@ -1,5 +1,6 @@
 package com.everage.eshop.controller;
 
+import com.everage.eshop.dto.CountryDto;
 import com.everage.eshop.dto.ShippingOptionsResponse;
 import com.everage.eshop.dto.ShippingResponse;
 import com.everage.eshop.entity.ShippingStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -38,6 +40,13 @@ public class ShippingController {
     ) {
         log.info("Fetching shipping options for country: {}, orderTotal: {}", country, orderTotal);
         return shippingService.getShippingOptions(country, orderTotal);
+    }
+
+    @GetMapping("/countries")
+    @Operation(summary = "Get list of supported countries")
+    public List<CountryDto> getSupportedCountries() {
+        log.info("Fetching list of supported countries");
+        return shippingService.getSupportedCountries();
     }
 
     @GetMapping("/track/{trackingNumber}")
