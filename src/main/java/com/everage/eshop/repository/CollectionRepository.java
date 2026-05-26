@@ -11,6 +11,7 @@ import java.util.UUID;
 
 @Repository
 public interface CollectionRepository extends BaseJpaRepository<Collection, UUID> {
+    Optional<Collection> findByUuid(UUID uuid);
     List<Collection> findAll();
     Optional<Collection> findByName(String name);
 }

@@ -21,7 +21,7 @@ public record CheckoutSessionRequest(
     ) {}
 
     public record CheckoutItem(
-            String itemId,
+            String itemUuid,
             Integer quantity
     ) {}
     

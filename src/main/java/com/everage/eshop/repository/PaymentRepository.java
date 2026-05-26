@@ -12,6 +12,7 @@ import java.util.UUID;
 
 @Repository
 public interface PaymentRepository extends BaseJpaRepository<Payment, UUID> {
+    Optional<Payment> findByUuid(UUID uuid);
     Optional<Payment> findByOrderUuid(UUID orderUuid);
     List<Payment> findByStatus(PaymentStatus status);
     List<Payment> findByCreatedAtBetween(LocalDateTime start, LocalDateTime end);
