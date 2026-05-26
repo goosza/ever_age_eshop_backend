@@ -2,6 +2,7 @@ package com.everage.eshop.service.shipping;
 
 import com.everage.eshop.config.ShippingPricingConfig;
 import com.everage.eshop.config.ZasilkovnaConfig;
+import com.everage.eshop.dto.CountryDto;
 import com.everage.eshop.dto.ShippingMethodDto;
 import com.everage.eshop.dto.ShippingOptionsResponse;
 import com.everage.eshop.dto.ShippingRequest;
@@ -362,5 +363,52 @@ public class ShippingService {
      */
     private String generateFallbackTrackingNumber() {
         return "TRACK-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase();
+    }
+    
+    /**
+     * Get list of supported countries with their zones
+     */
+    @Transactional(readOnly = true)
+    public List<CountryDto> getSupportedCountries() {
+        log.info("Fetching list of supported countries");
+        
+        List<CountryDto> countries = new ArrayList<>();
+        
+        // Zone 1: Central Europe
+        countries.add(new CountryDto("CZ", "Czech Republic", "🇨🇿", "zone1"));
+        countries.add(new CountryDto("SK", "Slovakia", "🇸🇰", "zone1"));
+        countries.add(new CountryDto("PL", "Poland", "🇵🇱", "zone1"));
+        countries.add(new CountryDto("HU", "Hungary", "🇭🇺", "zone1"));
+        countries.add(new CountryDto("AT", "Austria", "🇦🇹", "zone1"));
+        countries.add(new CountryDto("RO", "Romania", "🇷🇴", "zone1"));
+        
+        // Zone 2: Western Europe
+        countries.add(new CountryDto("DE", "Germany", "🇩🇪", "zone2"));
+        countries.add(new CountryDto("FR", "France", "🇫🇷", "zone2"));
+        countries.add(new CountryDto("BE", "Belgium", "🇧🇪", "zone2"));
+        countries.add(new CountryDto("NL", "Netherlands", "🇳🇱", "zone2"));
+        countries.add(new CountryDto("LU", "Luxembourg", "🇱🇺", "zone2"));
+        countries.add(new CountryDto("SI", "Slovenia", "🇸🇮", "zone2"));
+        countries.add(new CountryDto("HR", "Croatia", "🇭🇷", "zone2"));
+        
+        // Zone 3: Rest of Europe
+        countries.add(new CountryDto("IT", "Italy", "🇮🇹", "zone3"));
+        countries.add(new CountryDto("ES", "Spain", "🇪🇸", "zone3"));
+        countries.add(new CountryDto("PT", "Portugal", "🇵🇹", "zone3"));
+        countries.add(new CountryDto("GR", "Greece", "🇬🇷", "zone3"));
+        countries.add(new CountryDto("BG", "Bulgaria", "🇧🇬", "zone3"));
+        countries.add(new CountryDto("EE", "Estonia", "🇪🇪", "zone3"));
+        countries.add(new CountryDto("LV", "Latvia", "🇱🇻", "zone3"));
+        countries.add(new CountryDto("LT", "Lithuania", "🇱🇹", "zone3"));
+        countries.add(new CountryDto("DK", "Denmark", "🇩🇰", "zone3"));
+        countries.add(new CountryDto("SE", "Sweden", "🇸🇪", "zone3"));
+        countries.add(new CountryDto("FI", "Finland", "🇫🇮", "zone3"));
+        countries.add(new CountryDto("NO", "Norway", "🇳🇴", "zone3"));
+        countries.add(new CountryDto("IE", "Ireland", "🇮🇪", "zone3"));
+        countries.add(new CountryDto("CY", "Cyprus", "🇨🇾", "zone3"));
+        countries.add(new CountryDto("MT", "Malta", "🇲🇹", "zone3"));
+        
+        log.info("Returning {} supported countries", countries.size());
+        return countries;
     }
 }
