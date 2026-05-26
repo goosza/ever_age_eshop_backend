@@ -67,8 +67,7 @@ class StripeCheckoutServiceTest {
 
         CheckoutSessionRequest.CheckoutItem checkoutItem = new CheckoutSessionRequest.CheckoutItem(
                 itemId.toString(),
-                2,
-                2999L // 29.99 EUR in cents
+                2
         );
 
         CheckoutSessionRequest.ShippingInfo shippingInfo = new CheckoutSessionRequest.ShippingInfo(
@@ -135,8 +134,7 @@ class StripeCheckoutServiceTest {
 
         CheckoutSessionRequest.CheckoutItem checkoutItem2 = new CheckoutSessionRequest.CheckoutItem(
                 itemId2.toString(),
-                1,
-                4999L
+                1
         );
 
         CheckoutSessionRequest multiItemRequest = new CheckoutSessionRequest(
@@ -208,8 +206,7 @@ class StripeCheckoutServiceTest {
         // Given
         CheckoutSessionRequest.CheckoutItem invalidItem = new CheckoutSessionRequest.CheckoutItem(
                 "invalid-uuid",
-                1,
-                1000L
+                1
         );
         CheckoutSessionRequest invalidRequest = new CheckoutSessionRequest(
                 request.customerInfo(),

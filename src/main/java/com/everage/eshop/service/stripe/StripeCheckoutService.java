@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -40,29 +41,32 @@ public class StripeCheckoutService {
 
         // Validate items and build line items
         List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
-        List<String> productIds = new ArrayList<>();
+        List<String> itemIds = new ArrayList<>();
         List<Integer> quantities = new ArrayList<>();
         long totalAmount = 0;
 
         for (CheckoutSessionRequest.CheckoutItem checkoutItem : request.items()) {
-            UUID productId = UUID.fromString(checkoutItem.productId());
-            Item item = itemRepository.findById(productId)
-                    .orElseThrow(() -> new ItemNotFoundException("Item not found: " + productId));
+            UUID itemId = UUID.fromString(checkoutItem.itemId());
+            Item item = itemRepository.findById(itemId)
+                    .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemId));
 
             // Verify stock
             if (item.getQuantity() < checkoutItem.quantity()) {
                 throw new RuntimeException("Insufficient stock for item: " + item.getName());
             }
 
+            // Get price from database (security: never trust frontend prices!)
+            long priceInCents = item.getPrice().multiply(new BigDecimal("100")).longValue();
+            
             // Calculate total
-            totalAmount += checkoutItem.price() * checkoutItem.quantity();
+            totalAmount += priceInCents * checkoutItem.quantity();
 
             // Build Stripe line item
             SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
                     .setPriceData(
                             SessionCreateParams.LineItem.PriceData.builder()
                                     .setCurrency("eur")
-                                    .setUnitAmount(checkoutItem.price()) // price in cents
+                                    .setUnitAmount(priceInCents) // price from DB in cents
                                     .setProductData(
                                             SessionCreateParams.LineItem.PriceData.ProductData.builder()
                                                     .setName(item.getName())
@@ -77,7 +81,7 @@ public class StripeCheckoutService {
             lineItems.add(lineItem);
             
             // Store for metadata
-            productIds.add(checkoutItem.productId());
+            itemIds.add(checkoutItem.itemId());
             quantities.add(checkoutItem.quantity());
         }
 
@@ -101,7 +105,7 @@ public class StripeCheckoutService {
                 cancelUrl,
                 request.customerInfo(),
                 request.shippingInfo(),
-                productIds,
+                itemIds,
                 quantities
         );
 

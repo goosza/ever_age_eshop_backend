@@ -21,9 +21,8 @@ public record CheckoutSessionRequest(
     ) {}
 
     public record CheckoutItem(
-            String productId,
-            Integer quantity,
-            Long price  // cents
+            String itemId,
+            Integer quantity
     ) {}
     
     public record ShippingInfo(

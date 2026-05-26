@@ -50,8 +50,7 @@ class StripeCheckoutControllerTest {
 
         CheckoutSessionRequest.CheckoutItem checkoutItem = new CheckoutSessionRequest.CheckoutItem(
                 UUID.randomUUID().toString(),
-                2,
-                2999L
+                2
         );
 
         CheckoutSessionRequest.ShippingInfo shippingInfo = new CheckoutSessionRequest.ShippingInfo(
@@ -129,8 +128,7 @@ class StripeCheckoutControllerTest {
         // Given
         CheckoutSessionRequest.CheckoutItem item2 = new CheckoutSessionRequest.CheckoutItem(
                 UUID.randomUUID().toString(),
-                1,
-                4999L
+                1
         );
         CheckoutSessionRequest multiItemRequest = new CheckoutSessionRequest(
                 request.customerInfo(),
