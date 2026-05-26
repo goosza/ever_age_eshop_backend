@@ -246,7 +246,7 @@ public class ShippingService {
     public ShippingResponse createShipping(ShippingRequest request) {
         log.info("Creating shipping for order: {}", request.orderId());
 
-        Order order = orderRepository.findById(request.orderId())
+        Order order = orderRepository.findByUuid(request.orderId())
                 .orElseThrow(() -> new OrderNotFoundException("Order not found: " + request.orderId()));
 
         Shipping shipping = new Shipping();
@@ -294,7 +294,7 @@ public class ShippingService {
     public ShippingResponse updateShippingStatus(UUID shippingId, ShippingStatus status) {
         log.info("Updating shipping status: {} -> {}", shippingId, status);
 
-        Shipping shipping = shippingRepository.findById(shippingId)
+        Shipping shipping = shippingRepository.findByUuid(shippingId)
                 .orElseThrow(() -> new RuntimeException("Shipping not found: " + shippingId));
 
         shipping.setStatus(status);

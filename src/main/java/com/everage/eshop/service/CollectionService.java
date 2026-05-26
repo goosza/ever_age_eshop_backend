@@ -56,7 +56,7 @@ public class CollectionService {
     @Transactional(readOnly = true)
     public CollectionDto getCollectionByUuid(UUID uuid) {
         log.debug("Fetching collection with uuid: {}", uuid);
-        Collection collection = collectionRepository.findById(uuid)
+        Collection collection = collectionRepository.findByUuid(uuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
 
         CollectionDto dto = collectionMapper.toDto(collection);
@@ -112,7 +112,7 @@ public class CollectionService {
     public CollectionDto updateCollection(UUID uuid, CollectionMultipartRequest request, List<MultipartFile> images) {
         log.debug("Updating collection with uuid: {}", uuid);
 
-        Collection collection = collectionRepository.findById(uuid)
+        Collection collection = collectionRepository.findByUuid(uuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
 
         if (!collection.getName().equals(request.name())) {
@@ -161,7 +161,7 @@ public class CollectionService {
     public void deleteCollection(UUID uuid) {
         log.debug("Deleting collection with uuid: {}", uuid);
 
-        Collection collection = collectionRepository.findById(uuid)
+        Collection collection = collectionRepository.findByUuid(uuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with uuid: " + uuid));
 
         // Delete collection images from R2
@@ -190,10 +190,10 @@ public class CollectionService {
     public CollectionDto addItemToCollection(UUID collectionUuid, UUID itemUuid) {
         log.debug("Adding item {} to collection {}", itemUuid, collectionUuid);
 
-        Collection collection = collectionRepository.findById(collectionUuid)
+        Collection collection = collectionRepository.findByUuid(collectionUuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with id: " + collectionUuid));
 
-        Item item = itemRepository.findById(itemUuid)
+        Item item = itemRepository.findByUuid(itemUuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + itemUuid));
 
         collection.addItem(item);
@@ -225,10 +225,10 @@ public class CollectionService {
     public CollectionDto removeItemFromCollection(UUID collectionUuid, UUID itemUuid) {
         log.debug("Removing item {} from collection {}", itemUuid, collectionUuid);
 
-        Collection collection = collectionRepository.findById(collectionUuid)
+        Collection collection = collectionRepository.findByUuid(collectionUuid)
                 .orElseThrow(() -> new CollectionNotFoundException("Collection not found with id: " + collectionUuid));
 
-        Item item = itemRepository.findById(itemUuid)
+        Item item = itemRepository.findByUuid(itemUuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with id: " + itemUuid));
 
         if (!collection.getItems().contains(item)) {

@@ -38,17 +38,33 @@ public class StripeCheckoutService {
 
         // Validate shipping method and required fields
         validateCheckoutRequest(request);
+        
+        // Validate items list
+        if (request.items() == null || request.items().isEmpty()) {
+            throw new IllegalArgumentException("At least one item is required");
+        }
 
         // Validate items and build line items
         List<SessionCreateParams.LineItem> lineItems = new ArrayList<>();
-        List<String> itemIds = new ArrayList<>();
+        List<String> itemUuids = new ArrayList<>();
         List<Integer> quantities = new ArrayList<>();
         long totalAmount = 0;
 
         for (CheckoutSessionRequest.CheckoutItem checkoutItem : request.items()) {
-            UUID itemId = UUID.fromString(checkoutItem.itemId());
-            Item item = itemRepository.findById(itemId)
-                    .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemId));
+            // Validate itemUuid
+            if (checkoutItem.itemUuid() == null || checkoutItem.itemUuid().isBlank()) {
+                throw new IllegalArgumentException("Item UUID is required for all items");
+            }
+            
+            UUID itemUuid;
+            try {
+                itemUuid = UUID.fromString(checkoutItem.itemUuid());
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Invalid item UUID format: " + checkoutItem.itemUuid());
+            }
+            
+            Item item = itemRepository.findByUuid(itemUuid)
+                    .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemUuid));
 
             // Verify stock
             if (item.getQuantity() < checkoutItem.quantity()) {
@@ -81,7 +97,7 @@ public class StripeCheckoutService {
             lineItems.add(lineItem);
             
             // Store for metadata
-            itemIds.add(checkoutItem.itemId());
+            itemUuids.add(checkoutItem.itemUuid());
             quantities.add(checkoutItem.quantity());
         }
 
@@ -105,7 +121,7 @@ public class StripeCheckoutService {
                 cancelUrl,
                 request.customerInfo(),
                 request.shippingInfo(),
-                itemIds,
+                itemUuids,
                 quantities
         );
 

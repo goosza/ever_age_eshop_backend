@@ -39,7 +39,7 @@ public class ItemService {
     @Transactional(readOnly = true)
     public ItemDto getItemById(UUID uuid) {
         log.info("Fetching item by uuid: {}", uuid);
-        Item item = itemRepository.findById(uuid)
+        Item item = itemRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
         log.info("Found item: {}", item.getName());
         return resolveUrls(itemMapper.toDto(item));
@@ -72,7 +72,7 @@ public class ItemService {
     @Transactional
     public ItemDto updateItem(UUID uuid, ItemRequest request, List<MultipartFile> images) {
         log.info("Updating item with uuid: {}", uuid);
-        Item item = itemRepository.findById(uuid)
+        Item item = itemRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
 
         itemRepository.findByName(request.name())
@@ -137,7 +137,7 @@ public class ItemService {
     @Transactional
     public ItemDto decreaseQuantity(UUID uuid, Integer amount) {
         log.info("Decreasing quantity for item {} by {}", uuid, amount);
-        Item item = itemRepository.findById(uuid)
+        Item item = itemRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
         
         int newQuantity = Math.max(0, item.getQuantity() - amount);
@@ -159,7 +159,7 @@ public class ItemService {
     public void deleteItem(UUID uuid) {
         log.info("Deleting item with uuid: {}", uuid);
 
-        Item item = itemRepository.findById(uuid)
+        Item item = itemRepository.findByUuid(uuid)
                 .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
 
         // Delete images from R2

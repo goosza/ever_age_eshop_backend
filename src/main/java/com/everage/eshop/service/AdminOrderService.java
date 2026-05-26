@@ -24,14 +24,14 @@ public class AdminOrderService {
 
     @Transactional(readOnly = true)
     public OrderDto getOrder(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByUuid(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
         return orderMapper.toDto(order);
     }
 
     @Transactional
     public OrderDto confirmOrder(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByUuid(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.PENDING) {
@@ -50,7 +50,7 @@ public class AdminOrderService {
 
     @Transactional
     public OrderDto shipOrder(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByUuid(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.CONFIRMED && order.getStatus() != OrderStatus.PROCESSING) {
@@ -68,7 +68,7 @@ public class AdminOrderService {
 
     @Transactional
     public OrderDto deliverOrder(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByUuid(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (order.getStatus() != OrderStatus.SHIPPED) {
@@ -87,7 +87,7 @@ public class AdminOrderService {
 
     @Transactional
     public OrderDto cancelOrder(UUID orderId) {
-        Order order = orderRepository.findById(orderId)
+        Order order = orderRepository.findByUuid(orderId)
                 .orElseThrow(() -> new OrderNotFoundException("Order not found"));
 
         if (order.getStatus() == OrderStatus.DELIVERED) {

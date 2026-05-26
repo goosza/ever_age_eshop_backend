@@ -37,7 +37,7 @@ public class OrderService {
 
         // Validate all items exist and have stock
         for (OrderItemRequest itemRequest : request.items()) {
-            Item item = itemRepository.findById(itemRequest.uuid())
+            Item item = itemRepository.findByUuid(itemRequest.uuid())
                     .orElseThrow(() -> new ItemNotFoundException("Item not found: " + itemRequest.uuid()));
 
             // Check stock availability
@@ -71,7 +71,7 @@ public class OrderService {
 
         // Add Order Items
         for (OrderItemRequest itemRequest : request.items()) {
-            Item item = itemRepository.findById(itemRequest.uuid())
+            Item item = itemRepository.findByUuid(itemRequest.uuid())
                     .orElseThrow(() -> new ItemNotFoundException("Item not found"));
 
             OrderItem orderItem = new OrderItem();
