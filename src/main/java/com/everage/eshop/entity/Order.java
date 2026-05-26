@@ -45,12 +45,12 @@ public class Order {
     @Column(length = 20)
     private String phone;
 
-    // Delivery Address
-    @Column(nullable = false, columnDefinition = "TEXT")
+    // Delivery Address - optional for pickup methods (PICKUP, ZBOX, CARRIER_PICKUP)
+    @Column(columnDefinition = "TEXT")
     private String address;
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String city;
-    @Column(name = "postal_code", nullable = false, length = 20)
+    @Column(name = "postal_code", length = 20)
     private String postalCode;
     @Column(nullable = false, length = 50)
     private String country;

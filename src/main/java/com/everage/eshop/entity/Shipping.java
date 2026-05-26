@@ -43,7 +43,7 @@ public class Shipping {
     @Column(nullable = false, length = 30)
     private ShippingProvider provider;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String address;
 
     @Column(nullable = false, precision = 10, scale = 2)
