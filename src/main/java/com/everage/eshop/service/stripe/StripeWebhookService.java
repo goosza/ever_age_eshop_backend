@@ -52,6 +52,12 @@ public class StripeWebhookService {
 
         log.info("Checkout session completed: {}", session.getId());
         
+        // Idempotency check - skip if order already exists for this session
+        if (orderRepository.findByStripeSessionId(session.getId()).isPresent()) {
+            log.warn("Order already exists for session: {} - skipping duplicate webhook", session.getId());
+            return;
+        }
+        
         // Validate session data
         if (session.getCustomerDetails() == null || session.getCustomerDetails().getEmail() == null) {
             log.error("Session missing customer details: {}", session.getId());
