@@ -1,7 +1,6 @@
 package com.everage.eshop.repository;
 
 import com.everage.eshop.entity.Collection;
-import com.everage.eshop.entity.Item;
 import io.hypersistence.utils.spring.repository.BaseJpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -13,6 +13,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ForeignKey;
+import jakarta.persistence.Version;
 import org.hibernate.annotations.Type;
 import lombok.Data;
 
@@ -30,6 +31,10 @@ public class Item {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
     private UUID uuid;
+
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
     @Column(nullable = false)
     private String name;
     private String description;

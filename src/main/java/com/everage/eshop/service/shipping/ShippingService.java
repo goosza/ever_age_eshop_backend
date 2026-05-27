@@ -12,6 +12,7 @@ import com.everage.eshop.dto.zasilkovna.CreateShipmentRequest;
 import com.everage.eshop.dto.zasilkovna.CreateShipmentResponse;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.Shipping;
+import com.everage.eshop.entity.ShippingMethod;
 import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.entity.ShippingStatus;
 import com.everage.eshop.exception.order.OrderNotFoundException;
@@ -235,7 +236,10 @@ public class ShippingService {
             case "ZBOX" -> pricingConfig.getZbox();
             case "HOME" -> pricingConfig.getHome();
             case "CARRIER_PICKUP" -> pricingConfig.getCarrierPickup();
-            default -> pricingConfig.getPickup();
+            default -> {
+                log.warn("Unknown shipping method: {}, using default pickup price", method);
+                yield pricingConfig.getPickup();
+            }
         };
 
         log.info("Shipping cost calculated: {} EUR", cost);
@@ -358,11 +362,13 @@ public class ShippingService {
         }
     }
 
+    private static final int TRACKING_NUMBER_LENGTH = 12;
+
     /**
      * Generate fallback tracking number when API fails
      */
     private String generateFallbackTrackingNumber() {
-        return "TRACK-" + UUID.randomUUID().toString().substring(0, 12).toUpperCase();
+        return "TRACK-" + UUID.randomUUID().toString().substring(0, TRACKING_NUMBER_LENGTH).toUpperCase();
     }
     
     /**

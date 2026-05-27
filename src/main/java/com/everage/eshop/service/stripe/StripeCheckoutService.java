@@ -2,6 +2,7 @@ package com.everage.eshop.service.stripe;
 
 import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.everage.eshop.entity.Item;
+import com.everage.eshop.entity.ShippingMethod;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.payment.PaymentAmountTooSmallException;
 import com.everage.eshop.repository.ItemRepository;
@@ -155,7 +156,7 @@ public class StripeCheckoutService {
         String method = shipping.method();
 
         // Validation for HOME delivery
-        if ("HOME".equals(method)) {
+        if (ShippingMethod.HOME.name().equals(method)) {
             if (customer.address() == null || customer.address().isBlank()) {
                 throw new IllegalArgumentException("Address is required for home delivery");
             }
@@ -168,7 +169,9 @@ public class StripeCheckoutService {
         }
 
         // Validation for pickup methods (PICKUP, ZBOX, CARRIER_PICKUP)
-        if ("PICKUP".equals(method) || "ZBOX".equals(method) || "CARRIER_PICKUP".equals(method)) {
+        if (ShippingMethod.PICKUP.name().equals(method)
+                || ShippingMethod.ZBOX.name().equals(method)
+                || ShippingMethod.CARRIER_PICKUP.name().equals(method)) {
             if (shipping.pickupPointId() == null || shipping.pickupPointId().isBlank()) {
                 throw new IllegalArgumentException("Pickup point is required for " + method + " delivery");
             }

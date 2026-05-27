@@ -9,6 +9,7 @@ import com.everage.eshop.entity.OrderStatus;
 import com.everage.eshop.entity.Payment;
 import com.everage.eshop.entity.PaymentMethod;
 import com.everage.eshop.entity.PaymentStatus;
+import com.everage.eshop.entity.ShippingMethod;
 import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.repository.OrderRepository;
 import com.everage.eshop.repository.PaymentRepository;
@@ -118,11 +119,11 @@ public class StripeWebhookService {
         log.info("Order status updated to CONFIRMED");
 
         // Create shipping
-        String shippingMethod = metadata.getOrDefault("shipping_method", "PICKUP");
+        String shippingMethod = metadata.getOrDefault("shipping_method", ShippingMethod.PICKUP.name());
         String deliveryAddress;
         
         // Determine delivery address based on shipping method
-        if ("HOME".equals(shippingMethod)) {
+        if (ShippingMethod.HOME.name().equals(shippingMethod)) {
             // For home delivery - use customer address from metadata
             deliveryAddress = buildFullAddress(order);
         } else {

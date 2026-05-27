@@ -2,10 +2,12 @@ package com.everage.eshop.exception;
 
 import com.everage.eshop.exception.collection.CollectionAlreadyExistsException;
 import com.everage.eshop.exception.collection.CollectionNotFoundException;
+import com.everage.eshop.exception.item.InsufficientStockException;
 import com.everage.eshop.exception.item.InvalidItemStatusException;
 import com.everage.eshop.exception.item.ItemAlreadyExistsException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.item.ItemNotInCollectionException;
+import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.exception.payment.PaymentAmountTooSmallException;
 import com.everage.eshop.exception.payment.PaymentGatewayException;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ItemAlreadyExistsException.class)
     public ResponseEntity<Map<String, Object>> handleItemAlreadyExists(ItemAlreadyExistsException ex) {
         log.error("Item already exists: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<Map<String, Object>> handleInsufficientStock(InsufficientStockException ex) {
+        log.error("Insufficient stock: {}", ex.getMessage());
         return buildResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
@@ -80,6 +88,12 @@ public class GlobalExceptionHandler {
     // ============================================
     // General Exceptions
     // ============================================
+
+    @ExceptionHandler(OrderNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleOrderNotFound(OrderNotFoundException ex) {
+        log.error("Order not found: {}", ex.getMessage());
+        return buildResponse(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
