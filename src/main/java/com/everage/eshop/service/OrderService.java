@@ -62,10 +62,6 @@ public class OrderService {
         order.setLastName(request.lastName());
         order.setEmail(request.email());
         order.setPhone(request.phone());
-        order.setAddress(request.address());
-        order.setCity(request.city());
-        order.setPostalCode(request.postalCode());
-        order.setCountry(request.country());
         order.setCustomerNotes(request.customerNotes());
         order.setStatus(OrderStatus.PENDING);
 

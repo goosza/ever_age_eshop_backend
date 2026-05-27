@@ -73,7 +73,7 @@ class CollectionServiceTest {
         Collection collection = createCollection();
         CollectionDto dto = createCollectionDto();
 
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.of(collection));
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(collection.getItems())).thenReturn(List.of());
         when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -81,13 +81,13 @@ class CollectionServiceTest {
         CollectionDto result = collectionService.getCollectionByUuid(uuid);
 
         assertNotNull(result);
-        verify(collectionRepository).findById(uuid);
+        verify(collectionRepository).findByUuid(uuid);
     }
 
     @Test
     void getCollectionByUuid_WhenNotFound_ShouldThrow() {
         UUID uuid = UUID.randomUUID();
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(CollectionNotFoundException.class, () -> collectionService.getCollectionByUuid(uuid));
     }
@@ -134,7 +134,7 @@ class CollectionServiceTest {
                 "Alien", "New desc", List.of()
         );
 
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.of(collection));
         when(collectionRepository.merge(collection)).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(any())).thenReturn(List.of());
@@ -150,7 +150,7 @@ class CollectionServiceTest {
     @Test
     void updateCollection_WhenNotFound_ShouldThrow() {
         UUID uuid = UUID.randomUUID();
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(CollectionNotFoundException.class,
                 () -> collectionService.updateCollection(uuid,
@@ -165,7 +165,7 @@ class CollectionServiceTest {
         Collection other = createCollection();
         other.setUuid(UUID.randomUUID());
 
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.of(collection));
         when(collectionRepository.findByName("NewName")).thenReturn(Optional.of(other));
 
         assertThrows(CollectionAlreadyExistsException.class,
@@ -181,7 +181,7 @@ class CollectionServiceTest {
         Collection collection = createCollection();
         collection.setImageUrls(new ArrayList<>(List.of("collections/img.jpg")));
 
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.of(collection));
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.of(collection));
 
         collectionService.deleteCollection(uuid);
 
@@ -192,7 +192,7 @@ class CollectionServiceTest {
     @Test
     void deleteCollection_WhenNotFound_ShouldThrow() {
         UUID uuid = UUID.randomUUID();
-        when(collectionRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(collectionRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(CollectionNotFoundException.class, () -> collectionService.deleteCollection(uuid));
         verify(collectionRepository, never()).delete(any());
@@ -208,8 +208,8 @@ class CollectionServiceTest {
         Item item = createItem();
         CollectionDto dto = createCollectionDto();
 
-        when(collectionRepository.findById(collectionUuid)).thenReturn(Optional.of(collection));
-        when(itemRepository.findById(itemUuid)).thenReturn(Optional.of(item));
+        when(collectionRepository.findByUuid(collectionUuid)).thenReturn(Optional.of(collection));
+        when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(item));
         when(collectionRepository.persist(collection)).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(any())).thenReturn(List.of());
@@ -226,7 +226,7 @@ class CollectionServiceTest {
     void addItemToCollection_WhenCollectionNotFound_ShouldThrow() {
         UUID collectionUuid = UUID.randomUUID();
         UUID itemUuid = UUID.randomUUID();
-        when(collectionRepository.findById(collectionUuid)).thenReturn(Optional.empty());
+        when(collectionRepository.findByUuid(collectionUuid)).thenReturn(Optional.empty());
 
         assertThrows(CollectionNotFoundException.class,
                 () -> collectionService.addItemToCollection(collectionUuid, itemUuid));
@@ -236,8 +236,8 @@ class CollectionServiceTest {
     void addItemToCollection_WhenItemNotFound_ShouldThrow() {
         UUID collectionUuid = UUID.randomUUID();
         UUID itemUuid = UUID.randomUUID();
-        when(collectionRepository.findById(collectionUuid)).thenReturn(Optional.of(createCollection()));
-        when(itemRepository.findById(itemUuid)).thenReturn(Optional.empty());
+        when(collectionRepository.findByUuid(collectionUuid)).thenReturn(Optional.of(createCollection()));
+        when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.empty());
 
         assertThrows(ItemNotFoundException.class,
                 () -> collectionService.addItemToCollection(collectionUuid, itemUuid));
@@ -254,8 +254,8 @@ class CollectionServiceTest {
         collection.addItem(item);
         CollectionDto dto = createCollectionDto();
 
-        when(collectionRepository.findById(collectionUuid)).thenReturn(Optional.of(collection));
-        when(itemRepository.findById(itemUuid)).thenReturn(Optional.of(item));
+        when(collectionRepository.findByUuid(collectionUuid)).thenReturn(Optional.of(collection));
+        when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(item));
         when(collectionRepository.persist(collection)).thenReturn(collection);
         when(collectionMapper.toDto(collection)).thenReturn(dto);
         when(itemMapper.toDtoListWithoutCollection(any())).thenReturn(List.of());
@@ -274,8 +274,8 @@ class CollectionServiceTest {
         Collection collection = createCollection();
         Item item = createItem();
 
-        when(collectionRepository.findById(collectionUuid)).thenReturn(Optional.of(collection));
-        when(itemRepository.findById(itemUuid)).thenReturn(Optional.of(item));
+        when(collectionRepository.findByUuid(collectionUuid)).thenReturn(Optional.of(collection));
+        when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(item));
 
         assertThrows(ItemNotInCollectionException.class,
                 () -> collectionService.removeItemFromCollection(collectionUuid, itemUuid));

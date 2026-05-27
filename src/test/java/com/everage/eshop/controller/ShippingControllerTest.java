@@ -96,6 +96,10 @@ class ShippingControllerTest {
                 "TRACK-ABC123", 
                 status,
                 LocalDateTime.now().plusDays(5),
+                null,   // address (HOME delivery only)
+                null,   // city
+                null,   // postalCode
+                "CZ",   // country
                 "12345",
                 "Zasilkovna Prague",
                 "Central Square 1",

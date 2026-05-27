@@ -257,6 +257,9 @@ public class ShippingService {
         shipping.setOrder(order);
         shipping.setProvider(request.provider());
         shipping.setAddress(request.address());
+        shipping.setCity(request.city());
+        shipping.setPostalCode(request.postalCode());
+        shipping.setCountry(request.country());
         shipping.setStatus(ShippingStatus.PENDING);
         shipping.setCost(request.cost());
 

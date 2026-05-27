@@ -89,7 +89,7 @@ class StripeCheckoutServiceTest {
         when(mockSession.getId()).thenReturn("cs_test_123");
         when(mockSession.getUrl()).thenReturn("https://checkout.stripe.com/pay/cs_test_123");
 
-        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(itemId)).thenReturn(Optional.of(item));
         when(stripePaymentGateway.createCheckoutSession(
                 anyList(),
                 eq("john@example.com"),
@@ -107,7 +107,7 @@ class StripeCheckoutServiceTest {
         // Then
         assertNotNull(sessionUrl);
         assertEquals("https://checkout.stripe.com/pay/cs_test_123", sessionUrl);
-        verify(itemRepository).findById(itemId);
+        verify(itemRepository).findByUuid(itemId);
         verify(stripePaymentGateway).createCheckoutSession(
                 anyList(),
                 eq("john@example.com"),
@@ -146,8 +146,8 @@ class StripeCheckoutServiceTest {
         Session mockSession = mock(Session.class);
         when(mockSession.getUrl()).thenReturn("https://checkout.stripe.com/pay/cs_test_456");
 
-        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
-        when(itemRepository.findById(itemId2)).thenReturn(Optional.of(item2));
+        when(itemRepository.findByUuid(itemId)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(itemId2)).thenReturn(Optional.of(item2));
         when(stripePaymentGateway.createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList()))
                 .thenReturn(mockSession);
 
@@ -156,20 +156,20 @@ class StripeCheckoutServiceTest {
 
         // Then
         assertNotNull(sessionUrl);
-        verify(itemRepository).findById(itemId);
-        verify(itemRepository).findById(itemId2);
+        verify(itemRepository).findByUuid(itemId);
+        verify(itemRepository).findByUuid(itemId2);
     }
 
     @Test
     void createCheckoutSession_WithNonExistentItem_ShouldThrowException() {
         // Given
-        when(itemRepository.findById(itemId)).thenReturn(Optional.empty());
+        when(itemRepository.findByUuid(itemId)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(ItemNotFoundException.class, () ->
                 stripeCheckoutService.createCheckoutSession(request)
         );
-        verify(itemRepository).findById(itemId);
+        verify(itemRepository).findByUuid(itemId);
         verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList());
     }
 
@@ -177,14 +177,14 @@ class StripeCheckoutServiceTest {
     void createCheckoutSession_WithInsufficientStock_ShouldThrowException() {
         // Given
         item.setQuantity(1); // Less than requested quantity (2)
-        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(itemId)).thenReturn(Optional.of(item));
 
         // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class, () ->
                 stripeCheckoutService.createCheckoutSession(request)
         );
         assertTrue(exception.getMessage().contains("Insufficient stock"));
-        verify(itemRepository).findById(itemId);
+        verify(itemRepository).findByUuid(itemId);
         verify(stripePaymentGateway, never()).createCheckoutSession(anyList(), anyString(), anyString(), anyString(), any(), any(), anyList(), anyList());
     }
 
@@ -192,7 +192,7 @@ class StripeCheckoutServiceTest {
     void createCheckoutSession_WithZeroQuantity_ShouldThrowException() {
         // Given
         item.setQuantity(0);
-        when(itemRepository.findById(itemId)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(itemId)).thenReturn(Optional.of(item));
 
         // When & Then
         RuntimeException exception = assertThrows(RuntimeException.class, () ->

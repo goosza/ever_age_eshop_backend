@@ -64,7 +64,7 @@ class ItemServiceTest {
         Item item = createItem();
         ItemDto itemDto = createItemDto();
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
         when(itemMapper.toDto(item)).thenReturn(itemDto);
         when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -74,17 +74,17 @@ class ItemServiceTest {
         assertEquals("Test Item", result.name());
         assertEquals("red", result.color());
         assertNotNull(result.collection());
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verify(itemMapper).toDto(item);
     }
 
     @Test
     void getItemById_WhenItemNotExists_ShouldThrowException() {
         UUID uuid = UUID.randomUUID();
-        when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(ItemNotFoundException.class, () -> itemService.getItemById(uuid));
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verifyNoInteractions(itemMapper);
     }
 
@@ -141,7 +141,7 @@ class ItemServiceTest {
         );
         ItemDto resultDto = createItemDto();
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
         when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(resultDto);
         when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -150,7 +150,7 @@ class ItemServiceTest {
 
         assertNotNull(result);
         assertEquals("Test Item", result.name());
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verify(itemRepository).findByName(request.name());
         verify(itemMapper).toDto(item);
     }
@@ -167,7 +167,7 @@ class ItemServiceTest {
                 BigDecimal.valueOf(0.500), ItemStatus.ACTIVE, 10, "red", List.of("items/keep.jpg")
         );
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
         when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(createItemDto());
         when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -181,10 +181,10 @@ class ItemServiceTest {
     void updateItem_WhenItemNotExists_ShouldThrowException() {
         UUID uuid = UUID.randomUUID();
         ItemRequest request = createItemRequest(10, ItemStatus.ACTIVE);
-        when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(ItemNotFoundException.class, () -> itemService.updateItem(uuid, request, List.of()));
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verifyNoMoreInteractions(itemRepository, itemMapper);
     }
 
@@ -197,7 +197,7 @@ class ItemServiceTest {
         Item existingItem = createItem();
         existingItem.setUuid(otherId);
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
         when(itemRepository.findByName(request.name())).thenReturn(Optional.of(existingItem));
 
         assertThrows(ItemAlreadyExistsException.class, () -> itemService.updateItem(uuid, request, List.of()));
@@ -208,7 +208,7 @@ class ItemServiceTest {
         UUID uuid = UUID.randomUUID();
         Item item = createItem();
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
 
         itemService.deleteItem(uuid);
 
@@ -223,7 +223,7 @@ class ItemServiceTest {
         Collection collection = createCollection();
         collection.addItem(item);
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
 
         itemService.deleteItem(uuid);
 
@@ -235,10 +235,10 @@ class ItemServiceTest {
     @Test
     void deleteItem_WhenItemNotExists_ShouldThrowException() {
         UUID uuid = UUID.randomUUID();
-        when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(ItemNotFoundException.class, () -> itemService.deleteItem(uuid));
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verify(itemRepository, never()).delete(any());
     }
 
@@ -279,14 +279,14 @@ class ItemServiceTest {
         Item item = createItemWithQuantity(10);
         ItemDto resultDto = createItemDto();
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
         when(itemMapper.toDto(item)).thenReturn(resultDto);
 
         ItemDto result = itemService.decreaseQuantity(uuid, 3);
 
         assertNotNull(result);
         assertEquals(7, item.getQuantity());
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verify(itemMapper).toDto(item);
     }
 
@@ -296,7 +296,7 @@ class ItemServiceTest {
         Item item = createItemWithQuantity(5);
         item.setStatus(ItemStatus.ACTIVE);
 
-        when(itemRepository.findById(uuid)).thenReturn(Optional.of(item));
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(item));
         when(itemMapper.toDto(item)).thenReturn(createItemDto());
 
         itemService.decreaseQuantity(uuid, 5);
@@ -308,10 +308,10 @@ class ItemServiceTest {
     @Test
     void decreaseQuantity_WhenItemNotExists_ShouldThrowException() {
         UUID uuid = UUID.randomUUID();
-        when(itemRepository.findById(uuid)).thenReturn(Optional.empty());
+        when(itemRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
         assertThrows(ItemNotFoundException.class, () -> itemService.decreaseQuantity(uuid, 1));
-        verify(itemRepository).findById(uuid);
+        verify(itemRepository).findByUuid(uuid);
         verifyNoMoreInteractions(itemRepository, itemMapper);
     }
 

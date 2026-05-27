@@ -17,12 +17,6 @@ public record OrderDto(
         String email,
         String phone,
 
-        // Address
-        String address,
-        String city,
-        String postalCode,
-        String country,
-
         // Order details
         List<OrderItemDto> items,
         BigDecimal totalAmount,
@@ -30,6 +24,12 @@ public record OrderDto(
 
         // Notes
         String customerNotes,
+
+        // Shipping info (null until shipping is created)
+        OrderShippingDto shipping,
+
+        // Payment info (null until payment is processed)
+        OrderPaymentDto payment,
 
         // Timestamps
         LocalDateTime createdAt,

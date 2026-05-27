@@ -120,22 +120,24 @@ public class StripeWebhookService {
 
         // Create shipping
         String shippingMethod = metadata.getOrDefault("shipping_method", ShippingMethod.PICKUP.name());
-        String deliveryAddress;
         
-        // Determine delivery address based on shipping method
-        if (ShippingMethod.HOME.name().equals(shippingMethod)) {
-            // For home delivery - use customer address from metadata
-            deliveryAddress = buildFullAddress(order);
-        } else {
-            // For pickup methods - use pickup point address
-            deliveryAddress = metadata.getOrDefault("pickup_point_address", "Pickup Point");
-        }
-        
+        // Address fields from metadata - only set for HOME delivery
+        String deliveryAddress = ShippingMethod.HOME.name().equals(shippingMethod)
+                ? metadata.get("customer_address") : null;
+        String deliveryCity = ShippingMethod.HOME.name().equals(shippingMethod)
+                ? metadata.get("customer_city") : null;
+        String deliveryPostalCode = ShippingMethod.HOME.name().equals(shippingMethod)
+                ? metadata.get("customer_postal_code") : null;
+        String deliveryCountry = metadata.getOrDefault("customer_country", "");
+
         ShippingRequest shippingRequest = new ShippingRequest(
                 order.getUuid(),
                 ShippingProvider.ZASILKOVNA,
-                deliveryAddress,
                 new BigDecimal(metadata.getOrDefault("shipping_cost", "12.00")),
+                deliveryAddress,
+                deliveryCity,
+                deliveryPostalCode,
+                deliveryCountry,
                 metadata.get("pickup_point_id"),
                 metadata.get("pickup_point_name"),
                 metadata.get("pickup_point_address")
@@ -145,15 +147,6 @@ public class StripeWebhookService {
         log.info("Shipping created with tracking: {}", shippingDto.trackingNumber());
 
         log.info("Checkout session processing completed for order: {}", order.getOrderNumber());
-    }
-
-    private String buildFullAddress(Order order) {
-        return String.format("%s, %s, %s, %s",
-                order.getAddress(),
-                order.getCity(),
-                order.getPostalCode(),
-                order.getCountry()
-        );
     }
 
     @Transactional
@@ -182,11 +175,6 @@ public class StripeWebhookService {
         // Extract customer info from metadata (collected on frontend)
         String phone = metadata.getOrDefault("customer_phone", "");
         String country = metadata.getOrDefault("customer_country", "");
-        
-        // Address fields - may be null for pickup methods
-        String addressLine = metadata.get("customer_address");
-        String city = metadata.get("customer_city");
-        String postalCode = metadata.get("customer_postal_code");
 
         // Extract cart items from metadata
         List<OrderItemRequest> items = new ArrayList<>();
@@ -201,16 +189,12 @@ public class StripeWebhookService {
 
         log.info("Extracted {} items from session metadata", items.size());
 
-        // Create order request
+        // Create order request - no address here, it belongs to Shipping
         CreateOrderRequest request = new CreateOrderRequest(
                 firstName,
                 lastName,
                 email,
                 phone,
-                addressLine,
-                city,
-                postalCode,
-                country,
                 items,
                 null // customer notes
         );

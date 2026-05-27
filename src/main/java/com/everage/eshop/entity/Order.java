@@ -9,7 +9,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.UniqueConstraint;
@@ -45,16 +47,6 @@ public class Order {
     @Column(length = 20)
     private String phone;
 
-    // Delivery Address - optional for pickup methods (PICKUP, ZBOX, CARRIER_PICKUP)
-    @Column(columnDefinition = "TEXT")
-    private String address;
-    @Column(length = 50)
-    private String city;
-    @Column(name = "postal_code", length = 20)
-    private String postalCode;
-    @Column(nullable = false, length = 50)
-    private String country;
-
     // Order Details
     @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
@@ -73,6 +65,12 @@ public class Order {
     // Relationships
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY)
+    private Shipping shipping;
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY)
+    private Payment payment;
 
     // Timestamps
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -14,6 +14,12 @@ public record ShippingResponse(
         String trackingNumber,
         ShippingStatus status,
         LocalDateTime estimatedDelivery,
+        // Delivery address (for HOME delivery)
+        String address,
+        String city,
+        String postalCode,
+        String country,
+        // Pickup point (for PICKUP/ZBOX/CARRIER_PICKUP)
         String pickupPointId,
         String pickupPointName,
         String pickupPointAddress,

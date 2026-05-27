@@ -42,20 +42,20 @@ class AdminOrderServiceTest {
         Order order = createOrder(OrderStatus.PENDING);
         OrderDto dto = createOrderDto(id, OrderStatus.PENDING);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
         when(orderMapper.toDto(order)).thenReturn(dto);
 
         OrderDto result = adminOrderService.getOrder(id);
 
         assertNotNull(result);
         assertEquals(OrderStatus.PENDING, result.status());
-        verify(orderRepository).findById(id);
+        verify(orderRepository).findByUuid(id);
     }
 
     @Test
     void getOrder_WhenNotFound_ShouldThrow() {
         UUID id = UUID.randomUUID();
-        when(orderRepository.findById(id)).thenReturn(Optional.empty());
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () -> adminOrderService.getOrder(id));
     }
@@ -68,7 +68,7 @@ class AdminOrderServiceTest {
         Order order = createOrder(OrderStatus.PENDING);
         OrderDto dto = createOrderDto(id, OrderStatus.CONFIRMED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
         when(orderRepository.persist(order)).thenReturn(order);
         when(orderMapper.toDto(order)).thenReturn(dto);
 
@@ -84,7 +84,7 @@ class AdminOrderServiceTest {
         UUID id = UUID.randomUUID();
         Order order = createOrder(OrderStatus.CONFIRMED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
 
         assertThrows(RuntimeException.class, () -> adminOrderService.confirmOrder(id));
         verify(orderRepository, never()).persist(any());
@@ -93,7 +93,7 @@ class AdminOrderServiceTest {
     @Test
     void confirmOrder_WhenNotFound_ShouldThrow() {
         UUID id = UUID.randomUUID();
-        when(orderRepository.findById(id)).thenReturn(Optional.empty());
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () -> adminOrderService.confirmOrder(id));
     }
@@ -106,7 +106,7 @@ class AdminOrderServiceTest {
         Order order = createOrder(OrderStatus.CONFIRMED);
         OrderDto dto = createOrderDto(id, OrderStatus.SHIPPED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
         when(orderRepository.persist(order)).thenReturn(order);
         when(orderMapper.toDto(order)).thenReturn(dto);
 
@@ -122,7 +122,7 @@ class AdminOrderServiceTest {
         Order order = createOrder(OrderStatus.PROCESSING);
         OrderDto dto = createOrderDto(id, OrderStatus.SHIPPED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
         when(orderRepository.persist(order)).thenReturn(order);
         when(orderMapper.toDto(order)).thenReturn(dto);
 
@@ -136,7 +136,7 @@ class AdminOrderServiceTest {
         UUID id = UUID.randomUUID();
         Order order = createOrder(OrderStatus.PENDING);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
 
         assertThrows(RuntimeException.class, () -> adminOrderService.shipOrder(id));
         verify(orderRepository, never()).persist(any());
@@ -150,7 +150,7 @@ class AdminOrderServiceTest {
         Order order = createOrder(OrderStatus.SHIPPED);
         OrderDto dto = createOrderDto(id, OrderStatus.DELIVERED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
         when(orderRepository.persist(order)).thenReturn(order);
         when(orderMapper.toDto(order)).thenReturn(dto);
 
@@ -165,7 +165,7 @@ class AdminOrderServiceTest {
         UUID id = UUID.randomUUID();
         Order order = createOrder(OrderStatus.CONFIRMED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
 
         assertThrows(RuntimeException.class, () -> adminOrderService.deliverOrder(id));
         verify(orderRepository, never()).persist(any());
@@ -179,7 +179,7 @@ class AdminOrderServiceTest {
         Order order = createOrder(OrderStatus.PENDING);
         OrderDto dto = createOrderDto(id, OrderStatus.CANCELLED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
         when(orderRepository.persist(order)).thenReturn(order);
         when(orderMapper.toDto(order)).thenReturn(dto);
 
@@ -194,7 +194,7 @@ class AdminOrderServiceTest {
         UUID id = UUID.randomUUID();
         Order order = createOrder(OrderStatus.DELIVERED);
 
-        when(orderRepository.findById(id)).thenReturn(Optional.of(order));
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
 
         assertThrows(RuntimeException.class, () -> adminOrderService.cancelOrder(id));
         verify(orderRepository, never()).persist(any());
@@ -203,7 +203,7 @@ class AdminOrderServiceTest {
     @Test
     void cancelOrder_WhenNotFound_ShouldThrow() {
         UUID id = UUID.randomUUID();
-        when(orderRepository.findById(id)).thenReturn(Optional.empty());
+        when(orderRepository.findByUuid(id)).thenReturn(Optional.empty());
 
         assertThrows(OrderNotFoundException.class, () -> adminOrderService.cancelOrder(id));
     }
@@ -218,10 +218,6 @@ class AdminOrderServiceTest {
         order.setLastName("Doe");
         order.setEmail("john@example.com");
         order.setPhone("+420123456789");
-        order.setAddress("Main St 1");
-        order.setCity("Prague");
-        order.setPostalCode("11000");
-        order.setCountry("CZ");
         order.setTotalAmount(BigDecimal.valueOf(99.99));
         order.setStatus(status);
         return order;
@@ -231,9 +227,9 @@ class AdminOrderServiceTest {
         return new OrderDto(
                 id, "EVE-2024-000001",
                 "John", "Doe", "john@example.com", "+420123456789",
-                "Main St 1", "Prague", "11000", "CZ",
                 List.of(), BigDecimal.valueOf(99.99), status,
-                null, LocalDateTime.now(), LocalDateTime.now()
+                null, null, null,
+                LocalDateTime.now(), LocalDateTime.now()
         );
     }
 }

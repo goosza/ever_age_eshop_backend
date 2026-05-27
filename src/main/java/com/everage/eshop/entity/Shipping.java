@@ -43,8 +43,15 @@ public class Shipping {
     @Column(nullable = false, length = 30)
     private ShippingProvider provider;
 
+    // Delivery address - for HOME delivery
     @Column(columnDefinition = "TEXT")
     private String address;
+    @Column(length = 50)
+    private String city;
+    @Column(name = "postal_code", length = 20)
+    private String postalCode;
+    @Column(length = 50)
+    private String country;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal cost;
