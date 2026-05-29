@@ -1,19 +1,28 @@
-# Multistage build for image size optimizing
+# Stage 1: Extract JAR layers
+FROM eclipse-temurin:21-jre-alpine AS builder
+WORKDIR /app
+COPY everage.jar everage.jar
+RUN java -Djarmode=layertools -jar everage.jar extract
+
+# Stage 2: Final image
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Create user for security
+# Security: non-root user
 RUN addgroup -S spring && adduser -S spring -G spring
 USER spring:spring
 
-COPY everage.jar everage.jar
+# Copy layers in order of change frequency (least → most)
+# dependencies change rarely → cached aggressively
+COPY --from=builder /app/dependencies/ ./
+COPY --from=builder /app/spring-boot-loader/ ./
+COPY --from=builder /app/snapshot-dependencies/ ./
+# application code changes often → separate layer
+COPY --from=builder /app/application/ ./
 
-# Expose port
 EXPOSE 8080
 
-# Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1
 
-# Run application
-ENTRYPOINT ["java", "-jar", "everage.jar"]
+ENTRYPOINT ["java", "org.springframework.boot.loader.launch.JarLauncher"]
