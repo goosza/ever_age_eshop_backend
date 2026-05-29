@@ -56,13 +56,6 @@ public class ShippingController {
         return shippingService.getShippingByTracking(trackingNumber);
     }
 
-    @GetMapping("/order/{orderUuid}")
-    @Operation(summary = "Get shipping by order UUID")
-    public ShippingResponse getShippingByOrder(@PathVariable UUID orderUuid) {
-        log.info("Fetching shipping for order: {}", orderUuid);
-        return shippingService.getShippingByOrderId(orderUuid);
-    }
-
     @GetMapping("/order/{orderUuid}/label")
     @Operation(summary = "Download shipping label PDF")
     public ResponseEntity<byte[]> getShippingLabel(@PathVariable UUID orderUuid) {
