@@ -1,6 +1,7 @@
 package com.everage.eshop.repository;
 
 import com.everage.eshop.entity.Order;
+import com.everage.eshop.entity.OrderStatus;
 import io.hypersistence.utils.spring.repository.BaseJpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -14,4 +15,6 @@ public interface OrderRepository extends BaseJpaRepository<Order, UUID> {
     Optional<Order> findByOrderNumber(String orderNumber);
     Optional<Order> findByStripeSessionId(String stripeSessionId);
     List<Order> findByEmailOrderByCreatedAtDesc(String email);
+    List<Order> findByStatus(OrderStatus status);
+    List<Order> findAllByOrderByCreatedAtDesc();
 }

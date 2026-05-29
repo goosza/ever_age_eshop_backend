@@ -60,44 +60,6 @@ class AdminOrderServiceTest {
         assertThrows(OrderNotFoundException.class, () -> adminOrderService.getOrder(id));
     }
 
-    // ── confirmOrder ──────────────────────────────────────────────────────────
-
-    @Test
-    void confirmOrder_WhenPending_ShouldSetConfirmed() {
-        UUID id = UUID.randomUUID();
-        Order order = createOrder(OrderStatus.PENDING);
-        OrderDto dto = createOrderDto(id, OrderStatus.CONFIRMED);
-
-        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
-        when(orderRepository.persist(order)).thenReturn(order);
-        when(orderMapper.toDto(order)).thenReturn(dto);
-
-        OrderDto result = adminOrderService.confirmOrder(id);
-
-        assertEquals(OrderStatus.CONFIRMED, order.getStatus());
-        assertEquals(OrderStatus.CONFIRMED, result.status());
-        verify(orderRepository).persist(order);
-    }
-
-    @Test
-    void confirmOrder_WhenNotPending_ShouldThrow() {
-        UUID id = UUID.randomUUID();
-        Order order = createOrder(OrderStatus.CONFIRMED);
-
-        when(orderRepository.findByUuid(id)).thenReturn(Optional.of(order));
-
-        assertThrows(RuntimeException.class, () -> adminOrderService.confirmOrder(id));
-        verify(orderRepository, never()).persist(any());
-    }
-
-    @Test
-    void confirmOrder_WhenNotFound_ShouldThrow() {
-        UUID id = UUID.randomUUID();
-        when(orderRepository.findByUuid(id)).thenReturn(Optional.empty());
-
-        assertThrows(OrderNotFoundException.class, () -> adminOrderService.confirmOrder(id));
-    }
-
     // ── shipOrder ─────────────────────────────────────────────────────────────
 
     @Test

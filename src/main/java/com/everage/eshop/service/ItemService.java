@@ -155,6 +155,26 @@ public class ItemService {
         return result;
     }
 
+    /**
+     * Updates item quantity and automatically adjusts status.
+     * quantity = 0 → OUT_OF_STOCK, quantity > 0 → ACTIVE
+     */
+    @Transactional
+    public ItemDto updateQuantity(UUID uuid, Integer quantity) {
+        log.info("Updating quantity for item {} to {}", uuid, quantity);
+        if (quantity < 0) {
+            throw new IllegalArgumentException("Quantity cannot be negative");
+        }
+        Item item = itemRepository.findByUuid(uuid)
+                .orElseThrow(() -> new ItemNotFoundException("Item not found with uuid: " + uuid));
+
+        item.setQuantity(quantity);
+        item.setStatus(quantity > 0 ? ItemStatus.ACTIVE : ItemStatus.OUT_OF_STOCK);
+
+        log.info("Item {} quantity updated to {}, status: {}", item.getName(), quantity, item.getStatus());
+        return resolveUrls(itemMapper.toDto(item));
+    }
+
     @Transactional
     public void deleteItem(UUID uuid) {
         log.info("Deleting item with uuid: {}", uuid);
