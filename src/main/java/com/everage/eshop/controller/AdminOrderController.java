@@ -5,7 +5,6 @@ import com.everage.eshop.entity.OrderStatus;
 import com.everage.eshop.service.AdminOrderService;
 import com.everage.eshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Admin - Orders", description = "Order management for administrators")
-@SecurityRequirement(name = "hmac-auth")
 public class AdminOrderController {
 
     private final AdminOrderService adminOrderService;

@@ -4,7 +4,6 @@ import com.everage.eshop.dto.ShippingResponse;
 import com.everage.eshop.entity.ShippingStatus;
 import com.everage.eshop.service.shipping.ShippingService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +24,6 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 @Tag(name = "Admin - Shipping", description = "Shipping management for administrators")
-@SecurityRequirement(name = "hmac-auth")
 public class AdminShippingController {
 
     private final ShippingService shippingService;

@@ -9,6 +9,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -61,6 +63,18 @@ public class SecurityConfig {
     @Bean
     public HmacAuthFilter hmacAuthFilter() {
         return new HmacAuthFilter(adminSecret);
+    }
+
+    /**
+     * Disable Spring Security's default UserDetailsService and auto-generated password.
+     * We use HMAC-based authentication, not username/password.
+     */
+    @Bean
+    public UserDetailsService userDetailsService() {
+        // Return empty service — no users needed, auth is done via HMAC filter
+        return username -> {
+            throw new UsernameNotFoundException("No users");
+        };
     }
 
     @Bean
