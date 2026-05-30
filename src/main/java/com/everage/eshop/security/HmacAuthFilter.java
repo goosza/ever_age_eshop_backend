@@ -4,7 +4,6 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -22,7 +21,6 @@ import java.util.HexFormat;
 import java.util.List;
 
 @Slf4j
-@RequiredArgsConstructor
 public class HmacAuthFilter extends OncePerRequestFilter {
 
     private static final String SIGNATURE_HEADER = "X-Admin-Signature";
@@ -32,29 +30,36 @@ public class HmacAuthFilter extends OncePerRequestFilter {
     private static final long MAX_TIMESTAMP_AGE_SECONDS = 300;
 
     private final String adminSecret;
+    private final boolean devMode;
+
+    public HmacAuthFilter(String adminSecret, boolean devMode) {
+        this.adminSecret = adminSecret;
+        this.devMode = devMode;
+    }
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         // Only apply HMAC filter to admin endpoints
-        return !request.getRequestURI().startsWith("/api/admin")
-                && !isAdminWriteOperation(request);
-    }
-
-    private boolean isAdminWriteOperation(HttpServletRequest request) {
-        String method = request.getMethod();
-        String uri = request.getRequestURI();
-        // Write operations on items/collections/shipping require admin auth
-        return (method.equals("POST") || method.equals("PUT")
-                || method.equals("PATCH") || method.equals("DELETE"))
-                && (uri.startsWith("/api/items")
-                    || uri.startsWith("/api/collections")
-                    || uri.startsWith("/api/shipping"));
+        return !request.getRequestURI().startsWith("/api/admin");
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+
+        // Dev mode: skip HMAC check, grant admin access automatically
+        if (devMode) {
+            log.debug("Dev mode: granting admin access without HMAC for: {} {}",
+                    request.getMethod(), request.getRequestURI());
+            var auth = new UsernamePasswordAuthenticationToken(
+                    "admin-dev", null,
+                    List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+            );
+            SecurityContextHolder.getContext().setAuthentication(auth);
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         String signature = request.getHeader(SIGNATURE_HEADER);
         String timestampStr = request.getHeader(TIMESTAMP_HEADER);

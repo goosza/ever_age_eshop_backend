@@ -26,6 +26,9 @@ public class SecurityConfig {
     @Value("${admin.secret}")
     private String adminSecret;
 
+    @Value("${admin.dev-mode:false}")
+    private boolean adminDevMode;
+
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
@@ -62,7 +65,7 @@ public class SecurityConfig {
 
     @Bean
     public HmacAuthFilter hmacAuthFilter() {
-        return new HmacAuthFilter(adminSecret);
+        return new HmacAuthFilter(adminSecret, adminDevMode);
     }
 
     /**
