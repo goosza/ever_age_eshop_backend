@@ -81,11 +81,8 @@ public class StripeWebhookService {
             lastName = nameParts.length > 1 ? nameParts[1] : "";
         }
 
-        // Extract metadata (we'll store cart items there)
+        // Extract metadata (cart items, customer info, shipping — stored during checkout session creation)
         Map<String, String> metadata = session.getMetadata();
-        
-        // For now, we'll need to reconstruct the order from session line items
-        // In production, you might want to store order data in session metadata
         
         // Create order
         var orderDto = createOrderFromSession(session, firstName, lastName, email);
