@@ -3,9 +3,12 @@ package com.everage.eshop.service;
 import com.everage.eshop.dto.OrderDto;
 import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderStatus;
+import com.everage.eshop.entity.Shipping;
 import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.dto.mapper.OrderMapper;
 import com.everage.eshop.repository.OrderRepository;
+import com.everage.eshop.repository.ShippingRepository;
+import com.everage.eshop.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -21,6 +24,8 @@ public class AdminOrderService {
 
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
+    private final ShippingRepository shippingRepository;
+    private final EmailService emailService;
 
 
     @Transactional(readOnly = true)
@@ -49,10 +54,12 @@ public class AdminOrderService {
         }
 
         order.setStatus(OrderStatus.SHIPPED);
-
         order = orderRepository.persist(order);
-
         log.info("Order {} shipped", order.getOrderNumber());
+
+        // Send shipping notification email
+        Shipping shipping = shippingRepository.findByOrderUuid(order.getUuid()).orElse(null);
+        emailService.sendShippingNotification(order, shipping);
 
         return orderMapper.toDto(order);
     }

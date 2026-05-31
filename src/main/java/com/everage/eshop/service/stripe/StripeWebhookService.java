@@ -9,10 +9,13 @@ import com.everage.eshop.entity.OrderStatus;
 import com.everage.eshop.entity.Payment;
 import com.everage.eshop.entity.PaymentMethod;
 import com.everage.eshop.entity.PaymentStatus;
+import com.everage.eshop.entity.Shipping;
 import com.everage.eshop.entity.ShippingMethod;
 import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.repository.OrderRepository;
 import com.everage.eshop.repository.PaymentRepository;
+import com.everage.eshop.repository.ShippingRepository;
+import com.everage.eshop.service.EmailService;
 import com.everage.eshop.service.OrderService;
 import com.everage.eshop.service.shipping.ShippingService;
 import com.stripe.model.Event;
@@ -37,6 +40,8 @@ public class StripeWebhookService {
     private final ShippingService shippingService;
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final ShippingRepository shippingRepository;
+    private final EmailService emailService;
 
     @Transactional
     public void handleCheckoutSessionCompleted(Event event) {
@@ -142,6 +147,10 @@ public class StripeWebhookService {
         
         var shippingDto = shippingService.createShipping(shippingRequest);
         log.info("Shipping created with tracking: {}", shippingDto.trackingNumber());
+
+        // Send order confirmation email (async — doesn't block webhook processing)
+        Shipping shipping = shippingRepository.findByOrderUuid(order.getUuid()).orElse(null);
+        emailService.sendOrderConfirmation(order, shipping);
 
         log.info("Checkout session processing completed for order: {}", order.getOrderNumber());
     }

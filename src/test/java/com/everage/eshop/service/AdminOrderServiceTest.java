@@ -6,6 +6,8 @@ import com.everage.eshop.entity.Order;
 import com.everage.eshop.entity.OrderStatus;
 import com.everage.eshop.exception.order.OrderNotFoundException;
 import com.everage.eshop.repository.OrderRepository;
+import com.everage.eshop.repository.ShippingRepository;
+import com.everage.eshop.service.EmailService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +32,12 @@ class AdminOrderServiceTest {
 
     @Mock
     private OrderMapper orderMapper;
+
+    @Mock
+    private ShippingRepository shippingRepository;
+
+    @Mock
+    private EmailService emailService;
 
     @InjectMocks
     private AdminOrderService adminOrderService;

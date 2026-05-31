@@ -1,6 +1,5 @@
-package com.everage.eshop.config;
+package com.everage.eshop.config.security;
 
-import com.everage.eshop.security.HmacAuthFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

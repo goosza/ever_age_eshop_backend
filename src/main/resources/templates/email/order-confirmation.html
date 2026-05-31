@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; }
+        .header { background: #000; color: #fff; padding: 32px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; letter-spacing: 2px; }
+        .body { padding: 32px; }
+        .order-number { font-size: 18px; font-weight: bold; color: #333; margin-bottom: 24px; }
+        .section { margin-bottom: 24px; }
+        .section h3 { color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .items-table { width: 100%; border-collapse: collapse; }
+        .items-table th { text-align: left; padding: 8px 0; border-bottom: 1px solid #eee; font-size: 12px; color: #999; }
+        .items-table td { padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+        .total { font-size: 18px; font-weight: bold; text-align: right; margin-top: 16px; }
+        .pickup-box { background: #f9f9f9; border-radius: 6px; padding: 16px; }
+        .btn { display: inline-block; background: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 24px; }
+        .footer { padding: 24px 32px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>EVERAGE</h1>
+    </div>
+    <div class="body">
+        <p>Hi <span th:text="${order.firstName}">Customer</span>,</p>
+        <p>Your order has been confirmed and payment received. Thank you!</p>
+
+        <div class="order-number">
+            Order <span th:text="${order.orderNumber}">EVE-2026-000000</span>
+        </div>
+
+        <!-- Items -->
+        <div class="section">
+            <h3>Items</h3>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th style="text-align:right">Qty</th>
+                        <th style="text-align:right">Price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="item : ${order.items}">
+                        <td th:text="${item.item.name}">Item Name</td>
+                        <td style="text-align:right" th:text="${item.quantity}">1</td>
+                        <td style="text-align:right" th:text="${'€' + item.price}">€0.00</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="total">
+                Total: <span th:text="${'€' + order.totalAmount}">€0.00</span>
+            </div>
+        </div>
+
+        <!-- Shipping info -->
+        <div class="section" th:if="${shipping != null}">
+            <h3>Delivery</h3>
+            <div class="pickup-box">
+                <!-- Pickup point -->
+                <div th:if="${shipping.pickupPointName != null}">
+                    <strong>Pickup Point:</strong><br>
+                    <span th:text="${shipping.pickupPointName}">Zásilkovna Praha</span><br>
+                    <span th:text="${shipping.pickupPointAddress}" style="color:#666">Address</span>
+                </div>
+                <!-- Home delivery -->
+                <div th:if="${shipping.address != null}">
+                    <strong>Home Delivery:</strong><br>
+                    <span th:text="${shipping.address}">Street</span>,
+                    <span th:text="${shipping.city}">City</span>
+                    <span th:text="${shipping.postalCode}">00000</span>
+                </div>
+                <div th:if="${shipping.trackingNumber != null}" style="margin-top:8px">
+                    <strong>Tracking:</strong>
+                    <span th:text="${shipping.trackingNumber}">TRACK-XXXXX</span>
+                </div>
+            </div>
+        </div>
+
+        <a th:href="${trackOrderUrl}" class="btn">Track Your Order</a>
+    </div>
+    <div class="footer">
+        <p>Everage &bull; Questions? Contact us at support@everage.com</p>
+    </div>
+</div>
+</body>
+</html>

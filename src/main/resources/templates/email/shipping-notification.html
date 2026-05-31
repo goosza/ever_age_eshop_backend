@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Order is on its Way</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; }
+        .header { background: #000; color: #fff; padding: 32px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; letter-spacing: 2px; }
+        .body { padding: 32px; }
+        .tracking-box { background: #f9f9f9; border-radius: 6px; padding: 24px; text-align: center; margin: 24px 0; }
+        .tracking-number { font-size: 24px; font-weight: bold; letter-spacing: 2px; color: #333; }
+        .section h3 { color: #666; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+        .btn { display: inline-block; background: #000; color: #fff; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 24px; }
+        .footer { padding: 24px 32px; text-align: center; color: #999; font-size: 12px; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>EVERAGE</h1>
+    </div>
+    <div class="body">
+        <p>Hi <span th:text="${order.firstName}">Customer</span>,</p>
+        <p>Great news — your order <strong th:text="${order.orderNumber}">EVE-2026-000000</strong> has been shipped!</p>
+
+        <div class="tracking-box">
+            <div style="color:#666; font-size:12px; margin-bottom:8px">TRACKING NUMBER</div>
+            <div class="tracking-number" th:text="${trackingNumber}">TRACK-XXXXX</div>
+        </div>
+
+        <!-- Delivery destination -->
+        <div class="section" th:if="${shipping != null}">
+            <h3>Delivering to</h3>
+            <div th:if="${shipping.pickupPointName != null}">
+                <strong th:text="${shipping.pickupPointName}">Zásilkovna Praha</strong><br>
+                <span th:text="${shipping.pickupPointAddress}" style="color:#666">Address</span>
+            </div>
+            <div th:if="${shipping.address != null}">
+                <span th:text="${shipping.address}">Street</span>,
+                <span th:text="${shipping.city}">City</span>
+                <span th:text="${shipping.postalCode}">00000</span>
+            </div>
+            <div th:if="${shipping.estimatedDelivery != null}" style="margin-top:8px; color:#666">
+                Estimated delivery:
+                <span th:text="${#temporals.format(shipping.estimatedDelivery, 'dd MMM yyyy')}">01 Jan 2026</span>
+            </div>
+        </div>
+
+        <a th:href="${trackOrderUrl}" class="btn">Track Your Order</a>
+    </div>
+    <div class="footer">
+        <p>Everage &bull; Questions? Contact us at support@everage.com</p>
+    </div>
+</div>
+</body>
+</html>

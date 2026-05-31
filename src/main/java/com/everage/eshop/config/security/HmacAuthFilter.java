@@ -1,4 +1,4 @@
-package com.everage.eshop.security;
+package com.everage.eshop.config.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
