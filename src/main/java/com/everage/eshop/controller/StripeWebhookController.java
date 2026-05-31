@@ -4,6 +4,7 @@ import com.everage.eshop.service.stripe.StripeWebhookService;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.net.Webhook;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class StripeWebhookController {
 
     private final StripeWebhookService stripeWebhookService;
+    private final ObjectMapper objectMapper;
 
     @Value("${stripe.webhook.secret:}")
     private String webhookSecret;
@@ -43,9 +45,9 @@ public class StripeWebhookController {
                 event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
                 log.info("Webhook signature verified");
             } else {
-                // In development, parse without verification
-                log.warn("Webhook secret not configured - skipping signature verification");
-                event = Webhook.constructEvent(payload, sigHeader, "");
+                // Development: parse without verification
+                log.warn("Webhook secret not configured - skipping signature verification (dev only)");
+                event = objectMapper.readValue(payload, Event.class);
             }
         } catch (SignatureVerificationException e) {
             log.error("Invalid webhook signature: {}", e.getMessage());
