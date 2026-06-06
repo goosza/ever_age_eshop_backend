@@ -78,7 +78,7 @@ dependencies {
 
 tasks.named<BootJar>("bootJar") {
     archiveFileName.set("everage-service.jar")
-    launchScript()
+    // launchScript() removed — incompatible with layered JAR extraction in Docker
 }
 
 // Turn off default jar task (we need only bootJar)

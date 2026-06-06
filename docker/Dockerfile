@@ -1,8 +1,8 @@
 # Stage 1: Extract JAR layers
 FROM eclipse-temurin:21-jre-alpine AS builder
 WORKDIR /app
-COPY everage.jar everage.jar
-RUN java -Djarmode=layertools -jar everage.jar extract
+COPY everage-service.jar everage.jar
+RUN java -Djarmode=tools -jar everage.jar extract --layers --launcher --destination extracted
 
 # Stage 2: Final image
 FROM eclipse-temurin:21-jre-alpine
@@ -14,11 +14,11 @@ USER spring:spring
 
 # Copy layers in order of change frequency (least → most)
 # dependencies change rarely → cached aggressively
-COPY --from=builder /app/dependencies/ ./
-COPY --from=builder /app/spring-boot-loader/ ./
-COPY --from=builder /app/snapshot-dependencies/ ./
+COPY --from=builder /app/extracted/dependencies/ ./
+COPY --from=builder /app/extracted/spring-boot-loader/ ./
+COPY --from=builder /app/extracted/snapshot-dependencies/ ./
 # application code changes often → separate layer
-COPY --from=builder /app/application/ ./
+COPY --from=builder /app/extracted/application/ ./
 
 EXPOSE 8080
 
