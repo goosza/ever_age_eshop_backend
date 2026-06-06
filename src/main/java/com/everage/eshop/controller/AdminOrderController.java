@@ -37,6 +37,13 @@ public class AdminOrderController {
         return adminOrderService.getAllOrders(status);
     }
 
+    @GetMapping("/customer/{email}")
+    @Operation(summary = "Get orders by customer email")
+    public List<OrderDto> getCustomerOrders(@PathVariable String email) {
+        log.info("Admin: fetching orders for customer: {}", email);
+        return orderService.getOrdersByEmail(email);
+    }
+
     @GetMapping("/{uuid}")
     @Operation(summary = "Get order by UUID")
     public OrderDto getOrder(@PathVariable UUID uuid) {

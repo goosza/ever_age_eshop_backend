@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -41,6 +42,9 @@ public class SecurityConfig {
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${springdoc.swagger-ui.enabled:false}")
+    private boolean swaggerEnabled;
+
     private final ObjectMapper objectMapper = new ObjectMapper()
             .findAndRegisterModules();
 
@@ -61,19 +65,24 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/shipping/options").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/shipping/countries").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/shipping/track/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/orders/**").permitAll()
+                // Order tracking — only by session ID or order number (known only to the buyer)
+                .requestMatchers(HttpMethod.GET, "/api/orders/by-session/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/orders/track/**").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/orders/checkout").permitAll()
                 // Webhooks
                 .requestMatchers("/api/webhooks/**").permitAll()
                 .requestMatchers("/api/zasilkovna/webhook").permitAll()
                 // Actuator health check
                 .requestMatchers("/actuator/health").permitAll()
-                // Swagger
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Swagger — only when enabled (dev/local)
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").access(
+                    (authentication, ctx) -> new AuthorizationDecision(swaggerEnabled)
+                )
                 // All admin endpoints require ADMIN role
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
             )
+            .addFilterBefore(rateLimitFilter(), UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(hmacAuthFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
@@ -82,6 +91,11 @@ public class SecurityConfig {
     @Bean
     public HmacAuthFilter hmacAuthFilter() {
         return new HmacAuthFilter(adminSecret, adminDevMode);
+    }
+
+    @Bean
+    public RateLimitFilter rateLimitFilter() {
+        return new RateLimitFilter();
     }
 
     /**

@@ -11,8 +11,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/orders")
 @RequiredArgsConstructor
@@ -40,15 +38,5 @@ public class OrderTrackingController {
     public OrderDto getOrderBySessionId(@PathVariable String sessionId) {
         log.info("Fetching order for Stripe session: {}", sessionId);
         return orderService.getOrderByStripeSessionId(sessionId);
-    }
-
-    @GetMapping("/customer/{email}")
-    @Operation(
-            summary = "Get customer orders",
-            description = "Get all orders for a customer by email address"
-    )
-    public List<OrderDto> getCustomerOrders(@PathVariable String email) {
-        log.info("Getting orders for customer: {}", email);
-        return orderService.getOrdersByEmail(email);
     }
 }

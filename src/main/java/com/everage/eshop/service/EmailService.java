@@ -29,6 +29,9 @@ public class EmailService {
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${support.email:support@everage.com}")
+    private String supportEmail;
+
     /**
      * Send order confirmation email after successful payment.
      */
@@ -38,6 +41,7 @@ public class EmailService {
             Context ctx = new Context();
             ctx.setVariable("order", order);
             ctx.setVariable("shipping", shipping);
+            ctx.setVariable("supportEmail", supportEmail);
             ctx.setVariable("trackOrderUrl",
                     frontendUrl + "/orders/track/" + order.getOrderNumber());
 
@@ -68,6 +72,7 @@ public class EmailService {
             ctx.setVariable("order", order);
             ctx.setVariable("shipping", shipping);
             ctx.setVariable("trackingNumber", shipping.getTrackingNumber());
+            ctx.setVariable("supportEmail", supportEmail);
             ctx.setVariable("trackOrderUrl",
                     frontendUrl + "/orders/track/" + order.getOrderNumber());
 

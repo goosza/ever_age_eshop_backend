@@ -52,7 +52,7 @@
         <a th:href="${trackOrderUrl}" class="btn">Track Your Order</a>
     </div>
     <div class="footer">
-        <p>Everage &bull; Questions? Contact us at support@everage.com</p>
+        <p>Everage &bull; Questions? Contact us at <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@everage.com</a></p>
     </div>
 </div>
 </body>
