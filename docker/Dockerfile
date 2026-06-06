@@ -1,7 +1,7 @@
 # Stage 1: Extract JAR layers
 FROM eclipse-temurin:21-jre-alpine AS builder
 WORKDIR /app
-COPY everage-service.jar everage.jar
+COPY everage.jar everage.jar
 RUN java -Djarmode=tools -jar everage.jar extract --layers --launcher --destination extracted
 
 # Stage 2: Final image
