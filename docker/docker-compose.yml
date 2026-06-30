@@ -29,6 +29,28 @@ services:
       start_period: 10s
 
   # ============================================
+  # Admin Panel - React Application
+  # ============================================
+  admin-service:
+    image: ${ADMIN_DOCKER_REGISTRY}/${ADMIN_IMAGE_NAME}:${ADMIN_IMAGE_TAG}
+    container_name: everage-admin-dev
+    ports:
+      - "8081:80"
+    networks:
+      - everage-network
+    labels:
+      logging: "promtail"
+      application: "everage-admin-dev"
+      environment: "development"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
   # Spring Boot Application
   # ============================================
   everage-service:
