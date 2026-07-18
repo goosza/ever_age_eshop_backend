@@ -26,6 +26,10 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private static final int CHECKOUT_LIMIT = 5;
     private static final Duration CHECKOUT_WINDOW = Duration.ofMinutes(1);
 
+    // Order tracking: low limit to make order number brute-forcing impractical
+    private static final int ORDER_TRACKING_LIMIT = 10;
+    private static final Duration ORDER_TRACKING_WINDOW = Duration.ofMinutes(1);
+
     // General public API: max 100 requests per minute per IP
     private static final int GENERAL_LIMIT = 100;
     private static final Duration GENERAL_WINDOW = Duration.ofMinutes(1);
@@ -53,22 +57,39 @@ public class RateLimitFilter extends OncePerRequestFilter {
     }
 
     private Bucket getBucket(String ip, String uri) {
-        // Use stricter limit for checkout endpoint
-        boolean isCheckout = uri.contains("/orders/checkout");
-        String key = ip + ":" + (isCheckout ? "checkout" : "general");
+        String bucketType = resolveBucketType(uri);
+        String key = ip + ":" + bucketType;
 
-        return buckets.computeIfAbsent(key, k -> {
-            Bandwidth limit = isCheckout
-                    ? Bandwidth.builder()
-                        .capacity(CHECKOUT_LIMIT)
-                        .refillGreedy(CHECKOUT_LIMIT, CHECKOUT_WINDOW)
-                        .build()
-                    : Bandwidth.builder()
-                        .capacity(GENERAL_LIMIT)
-                        .refillGreedy(GENERAL_LIMIT, GENERAL_WINDOW)
-                        .build();
-            return Bucket.builder().addLimit(limit).build();
-        });
+        return buckets.computeIfAbsent(key, k -> Bucket.builder().addLimit(bandwidthFor(bucketType)).build());
+    }
+
+    private String resolveBucketType(String uri) {
+        if (uri.contains("/orders/checkout")) {
+            return "checkout";
+        }
+        // Covers /api/orders/track/** and /api/orders/by-session/** — both let a caller
+        // guess an identifier, so they get a stricter limit than the general public API.
+        if (uri.contains("/orders/track/") || uri.contains("/orders/by-session/")) {
+            return "order-tracking";
+        }
+        return "general";
+    }
+
+    private Bandwidth bandwidthFor(String bucketType) {
+        return switch (bucketType) {
+            case "checkout" -> Bandwidth.builder()
+                    .capacity(CHECKOUT_LIMIT)
+                    .refillGreedy(CHECKOUT_LIMIT, CHECKOUT_WINDOW)
+                    .build();
+            case "order-tracking" -> Bandwidth.builder()
+                    .capacity(ORDER_TRACKING_LIMIT)
+                    .refillGreedy(ORDER_TRACKING_LIMIT, ORDER_TRACKING_WINDOW)
+                    .build();
+            default -> Bandwidth.builder()
+                    .capacity(GENERAL_LIMIT)
+                    .refillGreedy(GENERAL_LIMIT, GENERAL_WINDOW)
+                    .build();
+        };
     }
 
     private String getClientIp(HttpServletRequest request) {

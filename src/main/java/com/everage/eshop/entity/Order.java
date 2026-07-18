@@ -18,6 +18,7 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -113,8 +114,22 @@ public class Order {
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    // Excludes visually ambiguous characters (0/O, 1/I) to keep order numbers easy to read.
+    private static final String ORDER_NUMBER_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+    private static final int ORDER_NUMBER_RANDOM_LENGTH = 10;
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    /**
+     * Generates an order number that is safe to expose on a public tracking endpoint.
+     * Uses a cryptographically secure random suffix (not a predictable timestamp) so
+     * that order numbers cannot be guessed or enumerated by an attacker.
+     */
     private String generateOrderNumber() {
-        return "EVE-" + LocalDateTime.now().getYear() + "-" +
-                String.format("%06d", System.currentTimeMillis() % 1000000);
+        StringBuilder suffix = new StringBuilder(ORDER_NUMBER_RANDOM_LENGTH);
+        for (int i = 0; i < ORDER_NUMBER_RANDOM_LENGTH; i++) {
+            int index = SECURE_RANDOM.nextInt(ORDER_NUMBER_ALPHABET.length());
+            suffix.append(ORDER_NUMBER_ALPHABET.charAt(index));
+        }
+        return "EVE-" + LocalDateTime.now().getYear() + "-" + suffix;
     }
 }

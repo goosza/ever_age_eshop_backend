@@ -100,7 +100,7 @@ public class OrderService {
         log.info("Fetching order by number: {}", orderNumber);
 
         Order order = orderRepository.findByOrderNumber(orderNumber)
-                .orElseThrow(() -> new RuntimeException("Order not found: " + orderNumber));
+                .orElseThrow(() -> new OrderNotFoundException("Order not found: " + orderNumber));
         log.info("Found order: {}", order.getOrderNumber());
         return orderMapper.toDto(order);
     }
