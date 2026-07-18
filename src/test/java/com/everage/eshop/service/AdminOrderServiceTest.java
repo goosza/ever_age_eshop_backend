@@ -13,6 +13,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -41,6 +43,56 @@ class AdminOrderServiceTest {
 
     @InjectMocks
     private AdminOrderService adminOrderService;
+
+    // ── getAllOrders (paginated) ────────────────────────────────────────────────
+
+    @Test
+    void getAllOrders_Paged_WithoutStatus_UsesFindAll() {
+        PageRequest pageRequest = PageRequest.of(0, 20);
+        Order order = createOrder(OrderStatus.PENDING);
+        OrderDto dto = createOrderDto(order.getUuid(), OrderStatus.PENDING);
+        var orderPage = new PageImpl<>(List.of(order), pageRequest, 1);
+
+        when(orderRepository.findAll(pageRequest)).thenReturn(orderPage);
+        when(orderMapper.toDto(order)).thenReturn(dto);
+
+        var result = adminOrderService.getAllOrders(null, pageRequest);
+
+        assertEquals(1, result.getTotalElements());
+        verify(orderRepository).findAll(pageRequest);
+        verify(orderRepository, never()).findByStatus(any(OrderStatus.class), any());
+    }
+
+    @Test
+    void getAllOrders_Paged_WithStatus_UsesFindByStatus() {
+        PageRequest pageRequest = PageRequest.of(0, 20);
+        Order order = createOrder(OrderStatus.SHIPPED);
+        OrderDto dto = createOrderDto(order.getUuid(), OrderStatus.SHIPPED);
+        var orderPage = new PageImpl<>(List.of(order), pageRequest, 1);
+
+        when(orderRepository.findByStatus(OrderStatus.SHIPPED, pageRequest)).thenReturn(orderPage);
+        when(orderMapper.toDto(order)).thenReturn(dto);
+
+        var result = adminOrderService.getAllOrders(OrderStatus.SHIPPED, pageRequest);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals(OrderStatus.SHIPPED, result.getContent().get(0).status());
+        verify(orderRepository).findByStatus(OrderStatus.SHIPPED, pageRequest);
+        verify(orderRepository, never()).findAll(any(PageRequest.class));
+    }
+
+    @Test
+    void getAllOrders_Paged_WhenNoOrders_ShouldReturnEmptyPage() {
+        PageRequest pageRequest = PageRequest.of(0, 20);
+        var emptyPage = new PageImpl<Order>(List.of(), pageRequest, 0);
+
+        when(orderRepository.findAll(pageRequest)).thenReturn(emptyPage);
+
+        var result = adminOrderService.getAllOrders(null, pageRequest);
+
+        assertTrue(result.getContent().isEmpty());
+        assertEquals(0, result.getTotalElements());
+    }
 
     // ── getOrder ──────────────────────────────────────────────────────────────
 

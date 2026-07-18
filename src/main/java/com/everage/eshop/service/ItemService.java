@@ -9,6 +9,8 @@ import com.everage.eshop.exception.item.ItemAlreadyExistsException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.exception.item.InvalidItemStatusException;
 import com.everage.eshop.repository.ItemRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,6 +36,16 @@ public class ItemService {
                 .stream().map(this::resolveUrls).toList();
         log.info("Found {} items", items.size());
         return items;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ItemDto> getAllItems(Pageable pageable) {
+        log.info("Fetching items page: {}", pageable);
+        Page<ItemDto> page = itemRepository.findAll(pageable)
+                .map(itemMapper::toDto)
+                .map(this::resolveUrls);
+        log.info("Found {} items (page {} of {})", page.getNumberOfElements(), page.getNumber() + 1, page.getTotalPages());
+        return page;
     }
 
     @Transactional(readOnly = true)

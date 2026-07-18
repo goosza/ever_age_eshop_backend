@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -48,6 +52,29 @@ class ItemControllerTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$[0].name").value("Test Item"));
+    }
+
+    @Test
+    void getItemsPaged_ShouldReturnPageOfItems() throws Exception {
+        PageRequest pageRequest = PageRequest.of(0, 20, Sort.by("name").ascending());
+        var page = new PageImpl<>(List.of(createItemDto()), pageRequest, 1);
+        when(itemService.getAllItems(any(PageRequest.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/items"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.content[0].name").value("Test Item"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void getItemsPaged_WithPageAndSizeParams_ShouldReturnPage() throws Exception {
+        var page = new PageImpl<ItemDto>(List.of(), PageRequest.of(2, 5), 0);
+        when(itemService.getAllItems(any(PageRequest.class))).thenReturn(page);
+
+        mockMvc.perform(get("/api/items?page=2&size=5"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content").isArray());
     }
 
     @Test

@@ -5,9 +5,13 @@ import com.everage.eshop.entity.OrderStatus;
 import com.everage.eshop.service.AdminOrderService;
 import com.everage.eshop.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,13 +32,24 @@ public class AdminOrderController {
     private final AdminOrderService adminOrderService;
     private final OrderService orderService;
 
+    private static final int MAX_PAGE_SIZE = 100;
+
     @GetMapping
-    @Operation(summary = "Get all orders", description = "Returns all orders, optionally filtered by status")
-    public List<OrderDto> getAllOrders(
-            @RequestParam(required = false) OrderStatus status
+    @Operation(
+            summary = "Get orders (paginated)",
+            description = "Returns a page of orders, optionally filtered by status. "
+                    + "Defaults to page 0, size 20, sorted by createdAt descending."
+    )
+    public Page<OrderDto> getAllOrders(
+            @RequestParam(required = false) OrderStatus status,
+            @Parameter(description = "Zero-based page index") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size (max " + MAX_PAGE_SIZE + ")") @RequestParam(defaultValue = "20") int size
     ) {
-        log.info("Admin: fetching all orders, status filter: {}", status);
-        return adminOrderService.getAllOrders(status);
+        int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+        int safePage = Math.max(page, 0);
+        log.info("Admin: fetching orders page {} size {}, status filter: {}", safePage, safeSize, status);
+        PageRequest pageRequest = PageRequest.of(safePage, safeSize, Sort.by("createdAt").descending());
+        return adminOrderService.getAllOrders(status, pageRequest);
     }
 
     @GetMapping("/customer/{email}")

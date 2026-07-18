@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -56,6 +58,37 @@ class ItemServiceTest {
         assertEquals(1, result.size());
         verify(itemRepository).findAll();
         verify(itemMapper).toDtoList(items);
+    }
+
+    @Test
+    void getAllItems_Paged_ShouldReturnPageOfItems() {
+        Item item = createItem();
+        ItemDto dto = createItemDto();
+        PageRequest pageRequest = PageRequest.of(0, 20);
+        var itemPage = new PageImpl<>(List.of(item), pageRequest, 1);
+
+        when(itemRepository.findAll(pageRequest)).thenReturn(itemPage);
+        when(itemMapper.toDto(item)).thenReturn(dto);
+        when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var result = itemService.getAllItems(pageRequest);
+
+        assertEquals(1, result.getTotalElements());
+        assertEquals("Test Item", result.getContent().get(0).name());
+        verify(itemRepository).findAll(pageRequest);
+    }
+
+    @Test
+    void getAllItems_Paged_WhenNoItems_ShouldReturnEmptyPage() {
+        PageRequest pageRequest = PageRequest.of(0, 20);
+        var emptyPage = new PageImpl<Item>(List.of(), pageRequest, 0);
+
+        when(itemRepository.findAll(pageRequest)).thenReturn(emptyPage);
+
+        var result = itemService.getAllItems(pageRequest);
+
+        assertTrue(result.getContent().isEmpty());
+        assertEquals(0, result.getTotalElements());
     }
 
     @Test

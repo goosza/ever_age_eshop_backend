@@ -11,6 +11,8 @@ import com.everage.eshop.repository.ShippingRepository;
 import com.everage.eshop.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +37,16 @@ public class AdminOrderService {
                 : orderRepository.findAllByOrderByCreatedAtDesc();
         log.info("Admin: returning {} orders", orders.size());
         return orderMapper.toDtoList(orders);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<OrderDto> getAllOrders(OrderStatus status, Pageable pageable) {
+        Page<Order> orders = status != null
+                ? orderRepository.findByStatus(status, pageable)
+                : orderRepository.findAll(pageable);
+        log.info("Admin: returning page {} of {} orders (status filter: {})",
+                orders.getNumber() + 1, orders.getTotalPages(), status);
+        return orders.map(orderMapper::toDto);
     }
 
     @Transactional(readOnly = true)

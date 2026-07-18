@@ -1,6 +1,8 @@
 package com.everage.eshop.repository;
 
 import com.everage.eshop.entity.Item;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import io.hypersistence.utils.spring.repository.BaseJpaRepository;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 public interface ItemRepository extends BaseJpaRepository<Item, UUID> {
     Optional<Item> findByUuid(UUID uuid);
     List<Item> findAll();
+    Page<Item> findAll(Pageable pageable);
     Optional<Item> findByName(String name);
     List<Item> findByCollectionUuid(UUID collectionUuid);
 }
