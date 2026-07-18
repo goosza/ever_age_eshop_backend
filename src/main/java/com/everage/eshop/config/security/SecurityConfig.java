@@ -1,6 +1,5 @@
 package com.everage.eshop.config.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -45,8 +45,7 @@ public class SecurityConfig {
     @Value("${springdoc.swagger-ui.enabled:false}")
     private boolean swaggerEnabled;
 
-    private final ObjectMapper objectMapper = new ObjectMapper()
-            .findAndRegisterModules();
+    private final JsonMapper jsonMapper = JsonMapper.builder().build();
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -118,7 +117,7 @@ public class SecurityConfig {
         return (HttpServletRequest request, HttpServletResponse response, AuthenticationException ex) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.getWriter().write(objectMapper.writeValueAsString(Map.of(
+            response.getWriter().write(jsonMapper.writeValueAsString(Map.of(
                     "timestamp", LocalDateTime.now().toString(),
                     "status", 401,
                     "error", "Unauthorized",
@@ -135,7 +134,7 @@ public class SecurityConfig {
         return (HttpServletRequest request, HttpServletResponse response, AccessDeniedException ex) -> {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-            response.getWriter().write(objectMapper.writeValueAsString(Map.of(
+            response.getWriter().write(jsonMapper.writeValueAsString(Map.of(
                     "timestamp", LocalDateTime.now().toString(),
                     "status", 403,
                     "error", "Forbidden",

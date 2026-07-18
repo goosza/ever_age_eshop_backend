@@ -6,10 +6,10 @@ import com.everage.eshop.entity.ItemStatus;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.service.ItemService;
 import com.everage.eshop.config.TestSecurityConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -41,7 +41,7 @@ class ItemControllerTest {
     private ItemService itemService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Test
     void getAllItems_ShouldReturnAllItems() throws Exception {

@@ -9,10 +9,10 @@ import com.everage.eshop.exception.item.ItemAlreadyExistsException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.service.ItemService;
 import com.everage.eshop.config.TestSecurityConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -48,7 +48,7 @@ class AdminItemControllerTest {
     private ItemService itemService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Test
     void createItem_WithValidData_ShouldReturn201() throws Exception {

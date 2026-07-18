@@ -4,10 +4,10 @@ import com.everage.eshop.dto.CheckoutSessionRequest;
 import com.everage.eshop.dto.CheckoutSessionResponse;
 import com.everage.eshop.service.stripe.StripeCheckoutService;
 import com.everage.eshop.config.TestSecurityConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -30,7 +30,7 @@ class CheckoutControllerTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @MockitoBean
     private StripeCheckoutService stripeCheckoutService;

@@ -7,10 +7,10 @@ import com.everage.eshop.exception.collection.CollectionNotFoundException;
 import com.everage.eshop.exception.item.ItemNotFoundException;
 import com.everage.eshop.service.CollectionService;
 import com.everage.eshop.config.TestSecurityConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
@@ -44,7 +44,7 @@ class AdminCollectionControllerTest {
     private CollectionService collectionService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Test
     void createCollection_ShouldReturn201() throws Exception {

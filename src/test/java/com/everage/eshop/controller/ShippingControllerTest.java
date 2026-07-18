@@ -5,10 +5,10 @@ import com.everage.eshop.entity.ShippingProvider;
 import com.everage.eshop.entity.ShippingStatus;
 import com.everage.eshop.service.shipping.ShippingService;
 import com.everage.eshop.config.TestSecurityConfig;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -33,7 +33,7 @@ class ShippingControllerTest {
     private ShippingService shippingService;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Test
     void trackShipment_ShouldReturn200() throws Exception {

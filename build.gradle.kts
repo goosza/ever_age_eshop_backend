@@ -4,7 +4,7 @@ plugins {
     java
     id("maven-publish")
     id("checkstyle")
-    id("org.springframework.boot") version "3.5.7"
+    id("org.springframework.boot")
 }
 
 group = "com.everage.eshop"
@@ -36,24 +36,24 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-security")
     // Swagger/OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.14")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${project.property("springdocVersion")}")
 
     // Email
     implementation("org.springframework.boot:spring-boot-starter-mail")
     implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
     // Rate limiting
-    implementation("com.bucket4j:bucket4j-core:8.10.1")
+    implementation("com.bucket4j:bucket4j-core:${project.property("bucket4jVersion")}")
 
     // Logstash Logback Encoder (JSON logs)
-    implementation("net.logstash.logback:logstash-logback-encoder:9.0")
+    implementation("net.logstash.logback:logstash-logback-encoder:${project.property("logstashLogbackEncoderVersion")}")
 
     // DB
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
-    implementation("io.hypersistence:hypersistence-utils-hibernate-63:${project.property("hypersistenceUtilsVersion")}")
+    implementation("io.hypersistence:hypersistence-utils-hibernate-71:${project.property("hypersistenceUtilsVersion")}")
 
     // Utils
     compileOnly("org.projectlombok:lombok")
@@ -64,17 +64,21 @@ dependencies {
     annotationProcessor("org.mapstruct:mapstruct-processor:${project.property("mapStructVersion")}")
 
     // Payment Gateway
-    implementation("com.stripe:stripe-java:32.1.0")
+    implementation("com.stripe:stripe-java:${project.property("stripeJavaVersion")}")
+    // Stripe's SDK uses Gson internally; declared explicitly so ApiResource.GSON is
+    // usable at compile time (transitively available, but not exported by stripe-java)
+    implementation("com.google.code.gson:gson:${project.property("gsonVersion")}")
 
     // HTTP Client for Shipping API
     implementation("org.springframework.boot:spring-boot-starter-webflux")
 
     // Cloudflare R2 / S3-compatible storage
-    implementation("software.amazon.awssdk:s3:2.26.12")
+    implementation("software.amazon.awssdk:s3:${project.property("awsSdkS3Version")}")
 
     // TEST
     "testImplementation"("org.springframework.boot:spring-boot-starter-test")
-    "testImplementation"("org.springframework.security:spring-security-test")
+    "testImplementation"("org.springframework.boot:spring-boot-starter-webmvc-test")
+    "testImplementation"("org.springframework.boot:spring-boot-starter-security-test")
 
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
@@ -93,7 +97,7 @@ tasks.named<Jar>("jar") {
 // CheckStyle Configuration
 // ========================================
 checkstyle {
-    toolVersion = "10.12.3"
+    toolVersion = project.property("checkstyleToolVersion").toString()
     configFile = file("${rootProject.projectDir}/config/checkstyle/checkstyle-main.xml")
 }
 
