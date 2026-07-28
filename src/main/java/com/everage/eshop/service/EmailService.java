@@ -9,6 +9,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -32,11 +33,28 @@ public class EmailService {
     @Value("${support.email:support@everage.com}")
     private String supportEmail;
 
+    // No SMTP credentials configured (e.g. local/dev without MAIL_USERNAME/
+    // MAIL_PASSWORD) — skip real sends and just log what would have gone out,
+    // instead of letting every send fail loudly against an unauthenticated
+    // SMTP connection.
+    @Value("${spring.mail.username:}")
+    private String mailUsername;
+
+    private boolean isMailConfigured() {
+        return StringUtils.hasText(mailUsername);
+    }
+
     /**
      * Send order confirmation email after successful payment.
      */
     @Async
     public void sendOrderConfirmation(Order order, Shipping shipping) {
+        if (!isMailConfigured()) {
+            log.warn("STUB: mail not configured (MAIL_USERNAME/MAIL_PASSWORD unset) — "
+                    + "would have sent order confirmation for {} to {}",
+                    order.getOrderNumber(), order.getEmail());
+            return;
+        }
         try {
             Context ctx = new Context();
             ctx.setVariable("order", order);
@@ -67,6 +85,12 @@ public class EmailService {
      */
     @Async
     public void sendShippingNotification(Order order, Shipping shipping) {
+        if (!isMailConfigured()) {
+            log.warn("STUB: mail not configured (MAIL_USERNAME/MAIL_PASSWORD unset) — "
+                    + "would have sent shipping notification for {} to {}",
+                    order.getOrderNumber(), order.getEmail());
+            return;
+        }
         try {
             Context ctx = new Context();
             ctx.setVariable("order", order);
