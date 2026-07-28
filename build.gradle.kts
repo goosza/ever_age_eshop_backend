@@ -49,7 +49,10 @@ dependencies {
     implementation("net.logstash.logback:logstash-logback-encoder:${project.property("logstashLogbackEncoderVersion")}")
 
     // DB
-    implementation("org.flywaydb:flyway-core")
+    // Spring Boot 4 split Flyway auto-configuration out of spring-boot-autoconfigure
+    // into its own module — the flyway-core jar alone is no longer auto-configured,
+    // this starter is required to pull in spring-boot-flyway.
+    implementation("org.springframework.boot:spring-boot-starter-flyway")
     implementation("org.flywaydb:flyway-database-postgresql")
     runtimeOnly("org.postgresql:postgresql")
     implementation("org.springframework.boot:spring-boot-starter-data-jdbc")
