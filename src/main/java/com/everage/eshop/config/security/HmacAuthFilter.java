@@ -87,8 +87,14 @@ public class HmacAuthFilter extends OncePerRequestFilter {
         }
 
         // Build the message to sign: METHOD + PATH + TIMESTAMP
+        // Must match the client exactly (see admin's src/api/hmac.ts), which signs
+        // the full request path including any query string (e.g. "?status=PAID").
+        // getRequestURI() alone omits the query string, so it must be appended here.
         String method = request.getMethod();
         String path = request.getRequestURI();
+        if (request.getQueryString() != null) {
+            path = path + "?" + request.getQueryString();
+        }
         String message = method + path + timestampStr;
 
         // Compute expected signature
