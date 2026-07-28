@@ -11,7 +11,7 @@
 
 {
 	# Global email for Let's Encrypt notices (optional but recommended)
-	email vellenore@gmail.com
+	email blabla@gmail.com
 }
 
 dev.averageaccessories.com {
