@@ -1,13 +1,19 @@
-# Caddy reverse proxy — single ingress point for all services.
-# Domain-based routing via dev.averageaccessories.com and subdomains.
+# Caddy reverse proxy — single ingress point for public-facing services.
+# Domain-based routing via dev.averageaccessories.com.
 # Certificates issued automatically via Let's Encrypt DNS-01 challenge
 # (Cloudflare plugin), which works even behind Cloudflare's proxy.
 #
 # NOTE: no api.dev.* subdomain here on purpose. Both frontend-service and
 # admin-service proxy /api/* to everage-service internally via their own
 # nginx (see nginx.conf in each repo), so browsers only ever talk to
-# dev.averageaccessories.com and admin.dev.averageaccessories.com — this
+# dev.averageaccessories.com or admin.dev.averageaccessories.com — this
 # keeps API calls same-origin (no CORS, no extra CSP connect-src entries).
+#
+# NOTE: both hostnames are gated by Cloudflare Access (Zero Trust) at the
+# Cloudflare edge, before traffic ever reaches this Caddy instance — see
+# docs/ARCHITECTURE.md. Only an allow-listed set of emails can pass; the
+# admin panel additionally requires the ADMIN_SECRET HMAC signature once
+# past Cloudflare Access (defense in depth, not a substitute for it).
 
 {
 	# Global email for Let's Encrypt notices (optional but recommended)

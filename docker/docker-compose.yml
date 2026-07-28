@@ -55,6 +55,9 @@ services:
   # ============================================
   # Admin Panel - React Application
   # ============================================
+  # Routed through Caddy at admin.dev.averageaccessories.com — gated by
+  # Cloudflare Access (Zero Trust) at the Cloudflare edge, so only
+  # allow-listed emails ever reach this container. See docs/ARCHITECTURE.md.
   admin-service:
     image: ${ADMIN_DOCKER_REGISTRY}/${ADMIN_IMAGE_NAME}:${ADMIN_IMAGE_TAG}
     container_name: everage-admin-dev
