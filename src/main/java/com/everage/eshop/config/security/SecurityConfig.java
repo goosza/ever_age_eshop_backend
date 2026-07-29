@@ -42,6 +42,15 @@ public class SecurityConfig {
     @Value("${frontend.url:http://localhost:5173}")
     private String frontendUrl;
 
+    // The admin panel is architecturally same-origin (its own nginx proxies
+    // /api/* to this backend internally — see docs/ARCHITECTURE.md), but
+    // browsers still attach an Origin header for requests with custom headers
+    // (X-Admin-Signature/X-Admin-Timestamp) or non-GET methods regardless of
+    // same-vs-cross-origin. Spring's CORS filter checks that header against
+    // this allow-list either way, so the admin origin must be included here.
+    @Value("${admin.url:http://localhost:5174}")
+    private String adminUrl;
+
     @Value("${springdoc.swagger-ui.enabled:false}")
     private boolean swaggerEnabled;
 
@@ -146,7 +155,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(frontendUrl));
+        config.setAllowedOrigins(List.of(frontendUrl, adminUrl));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

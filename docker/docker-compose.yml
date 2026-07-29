@@ -130,6 +130,9 @@ services:
       # Frontend
       - FRONTEND_URL=${FRONTEND_URL}
 
+      # Admin panel — needed for CORS allow-list (see SecurityConfig)
+      - ADMIN_URL=${ADMIN_URL}
+
       # JVM Options
       - JAVA_OPTS=-Xmx512m -Xms256m
 
