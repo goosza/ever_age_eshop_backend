@@ -49,6 +49,23 @@ public class StorageService {
 
         return key;
     }
+    
+    /**
+     * Converts a full public URL back to its storage key (inverse of {@link #toPublicUrl}).
+     * Used to normalize client-supplied URLs (e.g. existingImageUrls) before comparing
+     * against the raw keys stored in the entity.
+     *
+     * @param keyOrUrl storage key or full public URL
+     * @return storage key, e.g. "items/uuid_filename.jpg"
+     */
+    public String toStorageKey(String keyOrUrl) {
+        if (keyOrUrl == null) return null;
+        String prefix = r2Properties.publicUrl() + "/";
+        if (keyOrUrl.startsWith("http://") || keyOrUrl.startsWith("https://")) {
+            return keyOrUrl.startsWith(prefix) ? keyOrUrl.substring(prefix.length()) : keyOrUrl;
+        }
+        return keyOrUrl;
+    }
 
     /**
      * Converts a storage key to a full public URL.

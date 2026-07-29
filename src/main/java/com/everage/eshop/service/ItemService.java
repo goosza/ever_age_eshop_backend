@@ -94,7 +94,10 @@ public class ItemService {
                 });
 
         // Delete images that are no longer in the "keep" list
-        List<String> urlsToKeep = request.existingImageUrls() != null ? request.existingImageUrls() : List.of();
+        List<String> urlsToKeep = (request.existingImageUrls() != null ? request.existingImageUrls() : List.<String>of())
+            .stream()
+            .map(storageService::toStorageKey)
+            .toList();
         List<String> urlsToDelete = item.getImageUrls().stream()
                 .filter(url -> !urlsToKeep.contains(url))
                 .toList();
