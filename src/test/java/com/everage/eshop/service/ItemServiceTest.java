@@ -204,6 +204,7 @@ class ItemServiceTest {
         when(itemRepository.findByName(request.name())).thenReturn(Optional.empty());
         when(itemMapper.toDto(item)).thenReturn(createItemDto());
         when(storageService.toPublicUrls(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(storageService.toStorageKey(anyString())).thenAnswer(inv -> inv.getArgument(0));
 
         itemService.updateItem(uuid, request, List.of());
 
